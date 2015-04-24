@@ -735,11 +735,13 @@ class ChangeToReferenceGeometry(MultiFunction):
             if tdim == 2: # Surface in 3D
                 J = self.jacobian(Jacobian(domain))
                 cell_normal = cross_expr(J[:, 0], J[:, 1])
+                i = Index()
+                return CellOrientation(domain) * cell_normal / sqrt(cell_normal[i]*cell_normal[i])
             elif tdim == 1: # Line in 2D
                 # TODO: Document which normal direction this is
                 cell_normal = as_vector((-J[1, 0], J[0, 0]))
-            i = Index()
-            return cell_normal / sqrt(cell_normal[i]*cell_normal[i])
+                i = Index()
+                return cell_normal / sqrt(cell_normal[i]*cell_normal[i])
         elif tdim == gdim:
             return as_vector((0.0,)*tdim + (1.0,))
         else:
