@@ -35,7 +35,9 @@ class CustomPullback(FiniteElementBase):
     def repr(self):
         return "CustomPullback(%r, %r)" % (self._element, self._pullback)
 
-
+    def mapping(self):
+        return "custom"
+    
 class Pullback(object):
     """A class to hold the pullback to pass to the CustomPullback class"""
     __slots__ = ("callable", "name")
