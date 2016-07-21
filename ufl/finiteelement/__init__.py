@@ -36,6 +36,7 @@ from ufl.finiteelement.brokenelement import BrokenElement
 from ufl.finiteelement.traceelement import TraceElement
 from ufl.finiteelement.facetelement import FacetElement
 from ufl.finiteelement.interiorelement import InteriorElement
+from ufl.finiteeleemnt.custompullback import CustomPullback
 
 # Export list for ufl.classes
 __all_classes__ = [
