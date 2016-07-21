@@ -24,6 +24,7 @@ class CustomPullback(FiniteElementBase):
     Define a custom pullback for an existing finite element space
     """
     __slots__ = ("_pullback", "_element")
+
     def __init__(self, element, pullback):
         self._pullback = pullback
         self._element = element
@@ -38,6 +39,7 @@ class CustomPullback(FiniteElementBase):
 class Pullback(object):
     """A class to hold the pullback to pass to the CustomPullback class"""
     __slots__ = ("callable", "name")
+
     def __init__(self, callable, name):
         self.callable = callable
         self.name = name
