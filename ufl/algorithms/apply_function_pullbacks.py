@@ -128,7 +128,6 @@ def apply_single_function_pullbacks(g):
         assert f.ufl_shape == g.ufl_shape
         return f
 
-
     # By placing components in a list and using as_vector at the end, we're
     # assuming below that both global function g and its reference value r
     # have vector shape, which is the case for most elements with the exceptions:
@@ -187,7 +186,9 @@ def apply_single_function_pullbacks(g):
             j = Index()
             for i in range(gm):
                 g_components[gpos + i] = Jinv[j, i]*rv[j]
-
+        elif: mp == "custom":
+            rv = as_vector([r[rpos+k] for k in range(rm)])
+            g_components[gpos:gpos+gm] = element.pullback(rv)
         else:
             error("Unknown subelement mapping type %s for element %s." % (mp, str(subelm)))
 
