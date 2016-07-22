@@ -36,7 +36,7 @@ from ufl.finiteelement.brokenelement import BrokenElement
 from ufl.finiteelement.traceelement import TraceElement
 from ufl.finiteelement.facetelement import FacetElement
 from ufl.finiteelement.interiorelement import InteriorElement
-from ufl.finiteeleemnt.custompullback import CustomPullback
+from ufl.finiteelement.custompullback import CustomPullback, Pullback
 
 # Export list for ufl.classes
 __all_classes__ = [
@@ -54,4 +54,6 @@ __all_classes__ = [
     "TraceElement",
     "FacetElement",
     "InteriorElement",
+    "CustomPullback",
+    "Pullback"
     ]

@@ -216,7 +216,7 @@ from ufl.finiteelement import FiniteElementBase, FiniteElement, \
     MixedElement, VectorElement, TensorElement, EnrichedElement, \
     RestrictedElement, TensorProductElement, \
     HDivElement, HCurlElement, BrokenElement, TraceElement, \
-    FacetElement, InteriorElement
+    FacetElement, InteriorElement, CustomPullback, Pullback
 
 # Hook to extend predefined element families
 from ufl.finiteelement.elementlist import register_element, show_elements #, ufl_elements
@@ -314,6 +314,7 @@ __all__ = [
     'RestrictedElement', 'TensorProductElement',
     'HDivElement', 'HCurlElement',
     'BrokenElement', 'TraceElement', 'FacetElement', 'InteriorElement',
+    'CustomPullback', 'Pullback',
     'register_element', 'show_elements',
     'FunctionSpace',
     'Argument', 'TestFunction', 'TrialFunction',

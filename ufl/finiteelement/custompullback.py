@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2014 Andrew T. T. McRae
+# Copyright (C) 2016 Imperial College London
 #
 # This file is part of UFL.
 #
@@ -21,7 +21,10 @@ from ufl.finiteelement.finiteelementbase import FiniteElementBase
 
 class CustomPullback(FiniteElementBase):
     """
-    Define a custom pullback for an existing finite element space
+    Provide a custom pullback for an existing finite element space.
+
+    :arg element: The element to wrap.
+    :arg pullback: a :class:`Pullback` object providing the pullback.
     """
     __slots__ = ("_pullback", "_element")
 
@@ -29,22 +32,66 @@ class CustomPullback(FiniteElementBase):
         self._pullback = pullback
         self._element = element
 
+    def pullback(self, domain, rv):
+        """Pullback a form argument to reference space.
+
+        :arg domain: The :class:`ufl.Domain` object used to construct
+            geometric information.
+
+        :arg rv: The :class:`ufl.FormArgument` to pull back (already
+            wrapped in :class:`ufl.ReferenceValue`).
+
+        :returns: a :class:`ufl.Expr` representing ``rv`` in reference
+            space."""
+        return self._pullback(domain, rv)
+
     def __getattr__(self, name):
         return getattr(self._element, name)
 
-    def repr(self):
+    def __repr__(self):
         return "CustomPullback(%r, %r)" % (self._element, self._pullback)
+
+    def __str__(self):
+        return "CustomPullback(%s, %s)" % (self._element, self._pullback)
+
+    def shortstr(self):
+        return "CustomPullback(%s, %s)" % (self._element.shortstr(),
+                                           self._pullback.shortstr())
 
     def mapping(self):
         return "custom"
-    
-class Pullback(object):
-    """A class to hold the pullback to pass to the CustomPullback class"""
-    __slots__ = ("callable", "name")
 
-    def __init__(self, callable, name):
-        self.callable = callable
+
+class Pullback(object):
+    """A representation of a pullback.
+
+    :arg name: A descriptive name.
+
+    Subclass this object and implement :meth:`__call__` to provide a
+    particular pullback type.
+    """
+
+    __slots__ = ("name")
+
+    def __init__(self, name):
         self.name = name
 
-    def repr(self):
+    def __call__(self, domain, rv):
+        """Pull back ``rv`` to reference space.
+
+        :arg domain: The :class:`ufl.Domain` object used to construct
+            geometric information.
+
+        :arg g: The :class:`ufl.FormArgument` to pull back (already
+            wrapped in :class:`ufl.ReferenceValue`).
+
+        :returns: a :class:`ufl.Expr` representing ``rv`` in reference
+            space."""
+        raise NotImplementedError("Subclass should implement __call__")
+
+    def __repr__(self):
         return "Pullback(%r)" % self.name
+
+    __str__ = __repr__
+
+    shortstr = __str__

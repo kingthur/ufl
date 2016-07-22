@@ -127,6 +127,9 @@ def apply_single_function_pullbacks(g):
         #f = as_tensor(Jinv[j, i]*r[k,j], (k,i)) # FIXME: Handle Vector(Piola) here?
         assert f.ufl_shape == g.ufl_shape
         return f
+    elif mapping == "custom":
+        f = element.pullback(domain, r)
+        return f
 
     # By placing components in a list and using as_vector at the end, we're
     # assuming below that both global function g and its reference value r
@@ -186,7 +189,7 @@ def apply_single_function_pullbacks(g):
             j = Index()
             for i in range(gm):
                 g_components[gpos + i] = Jinv[j, i]*rv[j]
-        elif: mp == "custom":
+        elif mp == "custom":
             rv = as_vector([r[rpos+k] for k in range(rm)])
             g_components[gpos:gpos+gm] = element.pullback(rv)
         else:
