@@ -5,6 +5,7 @@
 from ufl import *
 from ufl.algebra import Product, Sum
 from ufl.algorithms.apply_algebra_lowering import apply_algebra_lowering
+from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.core.multiindex import MultiIndex, FixedIndex
 from ufl.core.operator import Operator
 from ufl.corealg.traversal import post_traversal
@@ -124,3 +125,46 @@ class TestEqualUpToIndexRelabelling:
                                                 MultiIndex((i2,)))))
 
         assert equal_up_to_index_relabelling(exp1, exp2)
+
+
+@pytest.fixture
+def context():
+    class Context:
+        def return_values(self, element):
+            f = Coefficient(element)
+            g = Coefficient(element)
+            w = Argument(element, 0)
+            return f, g, w, element
+        def scalar(self):
+            cell = triangle
+            element = FiniteElement("Lagrange", cell, degree=1)
+            return self.return_values(element)
+        def vector(self, dim):
+            cell = triangle
+            element = VectorElement("Lagrange", cell, degree=1, dim=dim)
+            return self.return_values(element)
+    return Context()
+
+class TestDotDerivative:
+    def testLeftSimple(self, context):
+        f, g, w, element = context.vector(dim=2)
+        baseExpression = dot(f, g)
+        result = apply_derivatives(derivative(baseExpression, f, w))
+        expectedResult = dot(w, g)
+        assert equal_up_to_index_relabelling(result, expectedResult)
+
+    def testRightSimple(self, context):
+        f, g, w, element = context.vector(dim=3)
+        baseExpression = dot(f, g)
+        result = apply_derivatives(derivative(baseExpression, g, w))
+        expectedResult = dot(f, w)
+        assert equal_up_to_index_relabelling(result, expectedResult)
+
+    def testBothSimple(self, context):
+        f, g, w, element = context.vector(dim=3)
+        baseExpression = dot(f, f)
+        result = apply_derivatives(derivative(baseExpression, f, w))
+        expectedResult = dot(w, f) + dot(f, w)
+        # Note that the expectedResult is not reduced to 2 * dot(w, f),
+        # which it could be if the field of scalars is the reals.
+        assert equal_up_to_index_relabelling(result, expectedResult)

@@ -35,6 +35,7 @@ from ufl.classes import ExprList, ExprMapping
 from ufl.classes import Product, Sum, IndexSum
 from ufl.classes import JacobianInverse
 from ufl.classes import SpatialCoordinate
+from ufl.classes import Dot
 
 from ufl.constantvalue import is_true_ufl_scalar, is_ufl_scalar
 from ufl.operators import (conditional, sign,
@@ -1005,6 +1006,10 @@ class GateauxDerivativeRuleset(GenericDerivativeRuleset):
                         gprimesum += prod
 
         return gprimesum
+
+    def dot(self, o, fp, gp):
+        f, g = o.ufl_operands
+        return Dot(fp, g) + Dot(f, gp)
 
 
 class DerivativeRuleDispatcher(MultiFunction):
