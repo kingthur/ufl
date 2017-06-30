@@ -146,30 +146,32 @@ def context():
             cell = triangle
             element = VectorElement("Lagrange", cell, degree=1, dim=dim)
             return self.return_values(element)
+        def matrix(self, dim1, dim2):
+            cell = triangle
+            element = MixedElement(dim1*[VectorElement("Lagrange", cell, degree=1, dim=dim2)])
+            return self.return_values(element)
     return Context()
 
 class TestDotDerivative:
     def testLeftSimple(self, context):
-        f, g, w, element = context.vector(dim=2)
+        f, g, w, element = context.matrix(dim1=2, dim2=3)
         baseExpression = dot(f, g)
         result = apply_derivatives(derivative(baseExpression, f, w))
         expectedResult = dot(w, g)
         assert equal_up_to_index_relabelling(result, expectedResult)
 
     def testRightSimple(self, context):
-        f, g, w, element = context.vector(dim=3)
+        f, g, w, element = context.vector(dim=4)
         baseExpression = dot(f, g)
         result = apply_derivatives(derivative(baseExpression, g, w))
         expectedResult = dot(f, w)
         assert equal_up_to_index_relabelling(result, expectedResult)
 
     def testBothSimple(self, context):
-        f, g, w, element = context.vector(dim=3)
+        f, g, w, element = context.matrix(dim1=3, dim2=2)
         baseExpression = dot(f, f)
         result = apply_derivatives(derivative(baseExpression, f, w))
-        expectedResult = dot(w, f) + dot(f, w)
-        # Note that the expectedResult is not reduced to 2 * dot(w, f),
-        # which it could be if the field of scalars is the reals.
+        expectedResult = dot(w, f) + dot(f, w) # NB: not 2*dot(w, f).
         assert equal_up_to_index_relabelling(result, expectedResult)
 
 class TestGradDerivative:
