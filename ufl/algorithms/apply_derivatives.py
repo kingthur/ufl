@@ -29,7 +29,7 @@ from ufl.tensors import as_tensor, as_scalar, as_scalars, unit_indexed_tensor, u
 
 from ufl.classes import ConstantValue, Identity, Zero, FloatValue
 from ufl.classes import Coefficient, FormArgument, ReferenceValue
-from ufl.classes import Grad, ReferenceGrad, Variable
+from ufl.classes import Grad, ReferenceGrad, Variable, Div
 from ufl.classes import Indexed, ListTensor, ComponentTensor
 from ufl.classes import ExprList, ExprMapping
 from ufl.classes import Product, Sum, IndexSum
@@ -52,7 +52,6 @@ from ufl.algorithms.map_integrands import map_integrand_dags
 from ufl.checks import is_cellwise_constant
 
 # TODO: Add more rulesets?
-# - DivRuleset
 # - CurlRuleset
 # - ReferenceGradRuleset
 # - ReferenceDivRuleset
@@ -581,6 +580,49 @@ class GradRuleset(GenericDerivativeRuleset):
     facet_avg = GenericDerivativeRuleset.independent_operator
 
 
+class DivRuleset(GenericDerivativeRuleset):
+    def __init__(self):
+        # var_shape actually needs to *remove* part of the shape. It
+        # can't, so instead we override independent_terminal and
+        # independent_operator below.
+        GenericDerivativeRuleset.__init__(self, var_shape=())
+
+    # --- Overrides of helper functions
+
+    def independent_terminal(self, o):
+        "Return a zero with the right shape for terminals independent of differentiation variable."
+        return Zero(o.ufl_shape[:-1])
+
+    def independent_operator(self, o):
+        "Return a zero with the right shape and indices for operators independent of differentiation variable."
+        return Zero(o.ufl_shape[:-1], o.ufl_free_indices, o.ufl_index_dimensions)
+
+    # --- Specialized rules for geometric quantities
+
+    def geometric_quantity(self, o):
+        if is_cellwise_constant(o):
+            return self.independent_terminal(o)
+        else:
+            return Div(o)
+
+    # --- Specialized rules for form arguments
+
+    def coefficient(self, o):
+        if is_cellwise_constant(o):
+            return self.independent_terminal(o)
+        return Div(o)
+
+    def argument(self, o):
+        return Div(o)
+
+    def grad(self, o):
+        """We do not pass div through grad."""
+        return Div(o)
+
+    cell_avg = GenericDerivativeRuleset.independent_operator
+    facet_avg = GenericDerivativeRuleset.independent_operator
+
+
 class ReferenceGradRuleset(GenericDerivativeRuleset):
     def __init__(self, topological_dimension):
         GenericDerivativeRuleset.__init__(self,
@@ -887,6 +929,10 @@ class DerivativeRuleDispatcher(MultiFunction):
 
     def grad(self, o, f):
         rules = GradRuleset(o.ufl_shape[-1])
+        return map_expr_dag(rules, f)
+
+    def div(self, o, f):
+        rules = DivRuleset()
         return map_expr_dag(rules, f)
 
     def reference_grad(self, o, f):
