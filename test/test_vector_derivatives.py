@@ -100,11 +100,16 @@ class TestEqualUpToIndexRelabelling:
                                                 Indexed(grad(g), MultiIndex((i2, i3)))),
                                         MultiIndex((i2,))),
                                MultiIndex((i1, i3)))
-        exp2 = ComponentTensor(IndexSum(Product(Indexed(grad(f), MultiIndex((i1, i2))),
+        exp2 = ComponentTensor(IndexSum(Product(Indexed(grad(f), MultiIndex((i2, i3))),
+                                                Indexed(grad(g), MultiIndex((i3, i1)))),
+                                        MultiIndex((i3,))),
+                               MultiIndex((i2, i1)))
+        exp3 = ComponentTensor(IndexSum(Product(Indexed(grad(f), MultiIndex((i1, i2))),
                                                 Indexed(grad(g), MultiIndex((i3, i2)))),
                                         MultiIndex((i2,))),
                                MultiIndex((i1, i3)))
-        assert not equal(exp1, exp2)
+        assert equal(exp1, exp2)
+        assert not equal(exp1, exp3)
 
     def test_distinct_relabellings_between_subtrees(self):
         cell = triangle
