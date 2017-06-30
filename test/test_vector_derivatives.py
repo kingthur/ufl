@@ -72,25 +72,23 @@ class TestEqualUpToIndexRelabelling:
         f1 = f
         g1 = g
 
-        equal = equal_up_to_index_relabelling
-
-        assert equal(f, f)
-        assert not equal(f, g)
-        assert equal(f, f1)
-        assert equal(w, w)
-        assert not equal(f, w)
-        assert equal(grad(f), grad(f))
-        assert not equal(grad(f), grad(g))
-        assert equal(dot(grad(f), grad(g)), dot(grad(f), grad(g)))
-        assert not equal(dot(grad(f), grad(g)), dot(grad(f), grad(f)))
+        assert equal_up_to_index_relabelling(f, f)
+        assert not equal_up_to_index_relabelling(f, g)
+        assert equal_up_to_index_relabelling(f, f1)
+        assert equal_up_to_index_relabelling(w, w)
+        assert not equal_up_to_index_relabelling(f, w)
+        assert equal_up_to_index_relabelling(grad(f), grad(f))
+        assert not equal_up_to_index_relabelling(grad(f), grad(g))
+        assert equal_up_to_index_relabelling(dot(grad(f), grad(g)), dot(grad(f), grad(g)))
+        assert not equal_up_to_index_relabelling(dot(grad(f), grad(g)), dot(grad(f), grad(f)))
 
         exp = dot(grad(f), grad(g))
         low1 = apply_algebra_lowering(exp)
         low2 = apply_algebra_lowering(exp) # Will use different indices.
-        assert not equal(exp, low1)
-        assert not equal(exp, low2)
+        assert not equal_up_to_index_relabelling(exp, low1)
+        assert not equal_up_to_index_relabelling(exp, low2)
         assert not low1 == low2 # Shows only that the equality test is non-trivial.
-        assert equal(low1, low2)
+        assert equal_up_to_index_relabelling(low1, low2)
 
         # The first expression is dot(grad(f), grad(g)). This verifies
         # that we actually check down to the level of the indices, not
@@ -108,8 +106,8 @@ class TestEqualUpToIndexRelabelling:
                                                 Indexed(grad(g), MultiIndex((i3, i2)))),
                                         MultiIndex((i2,))),
                                MultiIndex((i1, i3)))
-        assert equal(exp1, exp2)
-        assert not equal(exp1, exp3)
+        assert equal_up_to_index_relabelling(exp1, exp2)
+        assert not equal_up_to_index_relabelling(exp1, exp3)
 
     def test_distinct_relabellings_between_subtrees(self):
         cell = triangle
