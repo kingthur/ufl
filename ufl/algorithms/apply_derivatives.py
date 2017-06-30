@@ -906,6 +906,11 @@ class GateauxDerivativeRuleset(GenericDerivativeRuleset):
             return self.independent_operator(o)
         return Grad(op)
 
+    def div(self, o, op):
+        if is_cellwise_constant(op):
+            return self.independent_operator(o)
+        return Div(op)
+
     def dot(self, o, fp, gp):
         f, g = o.ufl_operands
         return Dot(fp, g) + Dot(f, gp)

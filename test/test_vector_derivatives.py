@@ -138,16 +138,13 @@ def context():
             g = Coefficient(element)
             w = Argument(element, 0)
             return f, g, w, element
-        def scalar(self):
-            cell = triangle
+        def scalar(self, cell=triangle):
             element = FiniteElement("Lagrange", cell, degree=1)
             return self.return_values(element)
-        def vector(self, dim):
-            cell = triangle
+        def vector(self, dim, cell=triangle):
             element = VectorElement("Lagrange", cell, degree=1, dim=dim)
             return self.return_values(element)
-        def tensor(self, dim1, dim2):
-            cell = triangle
+        def tensor(self, dim1, dim2, cell=triangle):
             element = TensorElement("Lagrange", cell, degree=1, shape=(dim1,dim2))
             return self.return_values(element)
     return Context()
@@ -202,6 +199,21 @@ class TestGradDerivative:
         baseExpression = grad(f)
         result = apply_derivatives(derivative(baseExpression, f, w))
         expectedResult = grad(w)
+        assert equal_up_to_index_relabelling(result, expectedResult)
+
+class TestDivDerivative:
+    def testSimple2D(self, context):
+        f, g, w, element = context.vector(dim=2)
+        baseExpression = div(f)
+        result = apply_derivatives(derivative(baseExpression, f, w))
+        expectedResult = div(w)
+        assert equal_up_to_index_relabelling(result, expectedResult)
+
+    def testSimple3D(self, context):
+        f, g, w, element = context.vector(dim=3, cell=tetrahedron)
+        baseExpression = div(f)
+        result = apply_derivatives(derivative(baseExpression, f, w))
+        expectedResult = div(w)
         assert equal_up_to_index_relabelling(result, expectedResult)
 
 class TestCombined:
