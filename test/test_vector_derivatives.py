@@ -171,3 +171,35 @@ class TestDotDerivative:
         # Note that the expectedResult is not reduced to 2 * dot(w, f),
         # which it could be if the field of scalars is the reals.
         assert equal_up_to_index_relabelling(result, expectedResult)
+
+class TestGradDerivative:
+    def testSimple(self, context):
+        f, g, w, element = context.vector(dim=3)
+        baseExpression = grad(f)
+        result = apply_derivatives(derivative(baseExpression, f, w))
+        expectedResult = grad(w)
+        assert equal_up_to_index_relabelling(result, expectedResult)
+
+    def testWithDot(self, context):
+        f, g, w, element = context.scalar()
+        baseExpression = dot(grad(f), grad(g))
+        result = apply_derivatives(derivative(baseExpression, f, w))
+        expectedResult = dot(grad(w), grad(g))
+        assert equal_up_to_index_relabelling(result, expectedResult)
+
+    def testComplicatedWithDot(self, context):
+        f, g, w, element = context.scalar()
+        baseExpression = dot(grad(f), f * grad(g))
+        result = apply_derivatives(derivative(baseExpression, f, w))
+        expectedResult = dot(grad(w), f * grad(g)) + dot(grad(f), w * grad(g))
+        assert equal_up_to_index_relabelling(result, expectedResult)
+
+    def testWithSpecifiedCoefficientDerivatives(self, context):
+        f, g, w, element = context.scalar()
+        baseExpression = dot(grad(f), grad(g))
+        h = Coefficient(element)
+        df = Coefficient(element)
+        dg = Coefficient(element)
+        result = apply_derivatives(derivative(baseExpression, h, w, {f: df, g:dg}))
+        expectedResult = dot(grad(w*df), grad(g)) + dot(grad(f), grad(w*dg))
+        assert equal_up_to_index_relabelling(result, expectedResult)
