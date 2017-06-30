@@ -154,7 +154,7 @@ def context():
 
 class TestDotDerivative:
     def testLeftSimple(self, context):
-        f, g, w, element = context.tensor(dim1=2, dim2=3)
+        f, g, w, element = context.tensor(dim1=3, dim2=3)
         baseExpression = dot(f, g)
         result = apply_derivatives(derivative(baseExpression, f, w))
         expectedResult = dot(w, g)
@@ -168,7 +168,7 @@ class TestDotDerivative:
         assert equal_up_to_index_relabelling(result, expectedResult)
 
     def testBothSimple(self, context):
-        f, g, w, element = context.tensor(dim1=3, dim2=2)
+        f, g, w, element = context.tensor(dim1=3, dim2=3)
         baseExpression = dot(f, f)
         result = apply_derivatives(derivative(baseExpression, f, w))
         expectedResult = dot(w, f) + dot(f, w) # NB: not 2*dot(w, f).
