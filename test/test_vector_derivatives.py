@@ -146,15 +146,15 @@ def context():
             cell = triangle
             element = VectorElement("Lagrange", cell, degree=1, dim=dim)
             return self.return_values(element)
-        def matrix(self, dim1, dim2):
+        def tensor(self, dim1, dim2):
             cell = triangle
-            element = MixedElement(dim1*[VectorElement("Lagrange", cell, degree=1, dim=dim2)])
+            element = TensorElement("Lagrange", cell, degree=1, shape=(dim1,dim2))
             return self.return_values(element)
     return Context()
 
 class TestDotDerivative:
     def testLeftSimple(self, context):
-        f, g, w, element = context.matrix(dim1=2, dim2=3)
+        f, g, w, element = context.tensor(dim1=2, dim2=3)
         baseExpression = dot(f, g)
         result = apply_derivatives(derivative(baseExpression, f, w))
         expectedResult = dot(w, g)
@@ -168,7 +168,7 @@ class TestDotDerivative:
         assert equal_up_to_index_relabelling(result, expectedResult)
 
     def testBothSimple(self, context):
-        f, g, w, element = context.matrix(dim1=3, dim2=2)
+        f, g, w, element = context.tensor(dim1=3, dim2=2)
         baseExpression = dot(f, f)
         result = apply_derivatives(derivative(baseExpression, f, w))
         expectedResult = dot(w, f) + dot(f, w) # NB: not 2*dot(w, f).
@@ -176,7 +176,7 @@ class TestDotDerivative:
 
 class TestInnerDerivative:
     def testLeftSimple(self, context):
-        f, g, w, element = context.matrix(dim1=2, dim2=3)
+        f, g, w, element = context.tensor(dim1=2, dim2=3)
         baseExpression = inner(f, g)
         result = apply_derivatives(derivative(baseExpression, f, w))
         expectedResult = inner(w, g)
@@ -190,7 +190,7 @@ class TestInnerDerivative:
         assert equal_up_to_index_relabelling(result, expectedResult)
 
     def testBothSimple(self, context):
-        f, g, w, element = context.matrix(dim1=3, dim2=2)
+        f, g, w, element = context.tensor(dim1=3, dim2=2)
         baseExpression = inner(f, f)
         result = apply_derivatives(derivative(baseExpression, f, w))
         expectedResult = inner(w, f) + inner(f, w) # NB: not 2*inner(w, f).
@@ -230,7 +230,7 @@ class TestCombined:
         assert equal_up_to_index_relabelling(result, expectedResult)
 
     def testInnerGrad(self, context):
-        f, g, w, element = context.matrix(dim1=2, dim2=3)
+        f, g, w, element = context.tensor(dim1=2, dim2=3)
         baseExpression = inner(grad(f), grad(g))
         result = apply_derivatives(derivative(baseExpression, f, w))
         expectedResult = inner(grad(w), grad(g))
