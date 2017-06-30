@@ -52,7 +52,6 @@ from ufl.algorithms.map_integrands import map_integrand_dags
 from ufl.checks import is_cellwise_constant
 
 # TODO: Add more rulesets?
-# - CurlRuleset
 # - ReferenceGradRuleset
 # - ReferenceDivRuleset
 
@@ -623,6 +622,36 @@ class DivRuleset(GenericDerivativeRuleset):
     facet_avg = GenericDerivativeRuleset.independent_operator
 
 
+class CurlRuleset(GenericDerivativeRuleset):
+    def __init__(self):
+        GenericDerivativeRuleset.__init__(self, var_shape=())
+
+    # --- Specialized rules for geometric quantities
+
+    def geometric_quantity(self, o):
+        if is_cellwise_constant(o):
+            return self.independent_terminal(o)
+        else:
+            return Curl(o)
+
+    # --- Specialized rules for form arguments
+
+    def coefficient(self, o):
+        if is_cellwise_constant(o):
+            return self.independent_terminal(o)
+        return Curl(o)
+
+    def argument(self, o):
+        return Div(o)
+
+    def grad(self, o):
+        """Curl of grad is zero."""
+        return self.independent_operator(o)
+
+    cell_avg = GenericDerivativeRuleset.independent_operator
+    facet_avg = GenericDerivativeRuleset.independent_operator
+
+
 class ReferenceGradRuleset(GenericDerivativeRuleset):
     def __init__(self, topological_dimension):
         GenericDerivativeRuleset.__init__(self,
@@ -938,6 +967,10 @@ class DerivativeRuleDispatcher(MultiFunction):
 
     def div(self, o, f):
         rules = DivRuleset()
+        return map_expr_dag(rules, f)
+
+    def curl(self, o, f):
+        rules = CurlRuleset()
         return map_expr_dag(rules, f)
 
     def reference_grad(self, o, f):
