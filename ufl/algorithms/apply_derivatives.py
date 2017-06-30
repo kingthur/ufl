@@ -29,7 +29,7 @@ from ufl.tensors import as_tensor, as_scalar, as_scalars, unit_indexed_tensor, u
 
 from ufl.classes import ConstantValue, Identity, Zero, FloatValue
 from ufl.classes import Coefficient, FormArgument, ReferenceValue
-from ufl.classes import Grad, ReferenceGrad, Variable, Div
+from ufl.classes import Grad, ReferenceGrad, Variable, Div, Curl
 from ufl.classes import Indexed, ListTensor, ComponentTensor
 from ufl.classes import ExprList, ExprMapping
 from ufl.classes import Product, Sum, IndexSum
@@ -939,6 +939,11 @@ class GateauxDerivativeRuleset(GenericDerivativeRuleset):
         if is_cellwise_constant(op):
             return self.independent_operator(o)
         return Div(op)
+
+    def curl(self, o, op):
+        if is_cellwise_constant(op):
+            return self.independent_operator(o)
+        return Curl(op)
 
     def dot(self, o, fp, gp):
         f, g = o.ufl_operands

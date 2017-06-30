@@ -216,6 +216,14 @@ class TestDivDerivative:
         expectedResult = div(w)
         assert equal_up_to_index_relabelling(result, expectedResult)
 
+class TestCurlDerivative:
+    def testSimple(self, context):
+        f, g, w, element = context.vector(dim=3, cell=tetrahedron)
+        baseExpression = curl(f)
+        result = apply_derivatives(derivative(baseExpression, f, w))
+        expectedResult = curl(w)
+        assert equal_up_to_index_relabelling(result, expectedResult)
+
 class TestCombined:
     def testDotGrad(self, context):
         f, g, w, element = context.scalar()
