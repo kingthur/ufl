@@ -174,6 +174,28 @@ class TestDotDerivative:
         expectedResult = dot(w, f) + dot(f, w) # NB: not 2*dot(w, f).
         assert equal_up_to_index_relabelling(result, expectedResult)
 
+class TestInnerDerivative:
+    def testLeftSimple(self, context):
+        f, g, w, element = context.matrix(dim1=2, dim2=3)
+        baseExpression = inner(f, g)
+        result = apply_derivatives(derivative(baseExpression, f, w))
+        expectedResult = inner(w, g)
+        assert equal_up_to_index_relabelling(result, expectedResult)
+
+    def testRightSimple(self, context):
+        f, g, w, element = context.vector(dim=4)
+        baseExpression = inner(f, g)
+        result = apply_derivatives(derivative(baseExpression, g, w))
+        expectedResult = inner(f, w)
+        assert equal_up_to_index_relabelling(result, expectedResult)
+
+    def testBothSimple(self, context):
+        f, g, w, element = context.matrix(dim1=3, dim2=2)
+        baseExpression = inner(f, f)
+        result = apply_derivatives(derivative(baseExpression, f, w))
+        expectedResult = inner(w, f) + inner(f, w) # NB: not 2*inner(w, f).
+        assert equal_up_to_index_relabelling(result, expectedResult)
+
 class TestGradDerivative:
     def testSimple(self, context):
         f, g, w, element = context.vector(dim=3)
@@ -205,4 +227,11 @@ class TestCombined:
         dg = Coefficient(element)
         result = apply_derivatives(derivative(baseExpression, h, w, {f: df, g:dg}))
         expectedResult = dot(grad(w*df), grad(g)) + dot(grad(f), grad(w*dg))
+        assert equal_up_to_index_relabelling(result, expectedResult)
+
+    def testInnerGrad(self, context):
+        f, g, w, element = context.matrix(dim1=2, dim2=3)
+        baseExpression = inner(grad(f), grad(g))
+        result = apply_derivatives(derivative(baseExpression, f, w))
+        expectedResult = inner(grad(w), grad(g))
         assert equal_up_to_index_relabelling(result, expectedResult)
