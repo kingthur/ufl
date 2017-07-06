@@ -975,7 +975,24 @@ class GateauxDerivativeRuleset(GenericDerivativeRuleset):
     def grad(self, o, op):
         if is_cellwise_constant(op):
             return self.independent_operator(o)
-        return Grad(op)
+        # TODO: The original implementation includes accumulating
+        # contributions from variations in different components, which
+        # we do not.
+        # TODO: It also includes cases where we take the derivative of
+        # a whole list of expressions, which we do not.
+        # TODO: It also includes a case where the operand is Indexed,
+        # though it comments that this may not be used?
+        # TODO: Does this need to be extended to the other derivatives?
+        assert len(self._w) == 1
+        assert len(self._v) == 1
+        (v,) = self._v
+        if isinstance(v, FormArgument):
+            return Grad(op)
+        elif isinstance(v, ListTensor):
+            # The Grad may have to be applied to each component.
+            return apply_derivatives(Grad(op))
+        else:
+            error("Expecting argument to be a FormArgument or a ListTensor.")
 
     def nabla_grad(self, o, op):
         if is_cellwise_constant(op):

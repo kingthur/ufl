@@ -6,6 +6,8 @@ from ufl import *
 from ufl.algebra import Product, Sum
 from ufl.algorithms.apply_algebra_lowering import apply_algebra_lowering
 from ufl.algorithms.apply_derivatives import apply_derivatives
+from ufl.algorithms.compute_form_data import compute_form_data
+from ufl.algorithms.expand_indices import expand_indices
 from ufl.core.multiindex import MultiIndex, FixedIndex
 from ufl.core.operator import Operator
 from ufl.corealg.traversal import post_traversal
@@ -255,3 +257,20 @@ class TestCombined:
         result = apply_derivatives(derivative(baseExpression, f, w))
         expectedResult = inner(grad(w), grad(g))
         assert equal_up_to_index_relabelling(result, expectedResult)
+
+    def test_component_derivative(self):
+        # Simpler test of a use-case shown first by
+        # test_derivative::test_segregated_derivative_of_convection.
+        cell = triangle
+        V = FiniteElement("CG", cell, 1)
+        W = VectorElement("CG", cell, 1, dim=2)
+        u = Coefficient(W)
+        v = Coefficient(W)
+        du = TrialFunction(V)
+
+        L = inner(grad(u), grad(v))
+        dL = derivative(L, u[0], du)
+        form = dL * dx
+        fd = compute_form_data(form)
+        pf = fd.preprocessed_form
+        a = expand_indices(pf) # This test exists to ensure that this call does not cause an exception.
