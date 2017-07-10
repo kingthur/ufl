@@ -657,7 +657,6 @@ class DivRuleset(GenericDerivativeRuleset):
         return Div(o)
 
     def grad(self, o):
-        """We do not pass div through grad."""
         return Div(o)
 
     cell_avg = GenericDerivativeRuleset.independent_operator
