@@ -248,7 +248,23 @@ class TestCombined:
         df = Coefficient(element)
         dg = Coefficient(element)
         result = apply_derivatives(derivative(baseExpression, h, w, {f: df, g:dg}))
-        expectedResult = dot(grad(w*df), grad(g)) + dot(grad(f), grad(w*dg))
+        # The expected result is really
+        # dot(grad(w)*df + w*grad(df), grad(g))
+        # + dot(grad(f), grad(w)*dg + w*grad(dg))
+        # But, when expanded, this gives something involving sums of
+        # component tensors, while the actual result has component
+        # tensors of sums. Accordingly, we have to expand this
+        # ourselves.
+        expectedResult = (
+            dot(ComponentTensor(Indexed(grad(w), MultiIndex((i,)))*df
+                                + w*Indexed(grad(df), MultiIndex((i,))),
+                                MultiIndex((i,))),
+                grad(g))
+            + dot(grad(f),
+                  ComponentTensor(Indexed(grad(w), MultiIndex((i,)))*dg
+                                  + w*Indexed(grad(dg), MultiIndex((i,))),
+                                  MultiIndex((i,))))
+            )
         assert equal_up_to_index_relabelling(result, expectedResult)
 
     def testInnerGrad(self, context):

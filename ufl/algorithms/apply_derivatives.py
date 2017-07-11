@@ -982,16 +982,17 @@ class GateauxDerivativeRuleset(GenericDerivativeRuleset):
         # TODO: It also includes a case where the operand is Indexed,
         # though it comments that this may not be used?
         # TODO: Does this need to be extended to the other derivatives?
-        assert len(self._w) == 1
-        assert len(self._v) == 1
-        (v,) = self._v
-        if isinstance(v, FormArgument):
-            return Grad(op)
-        elif isinstance(v, ListTensor):
-            # The Grad may have to be applied to each component.
-            return apply_derivatives(Grad(op))
-        else:
-            error("Expecting argument to be a FormArgument or a ListTensor.")
+
+        # The nested application of derivatives is necessary in at
+        # least the following two cases:
+        # (1) The specified argument is actually a ListTensor. This
+        #     occurs with calls like derivative(a, u[0], w), where u[0]
+        #     is transformed to u, and w to a ListTensor representing
+        #     (w, 0, 0), within the function call. Then the gradient
+        #     must pass through the ListTensor.
+        # (2) The argument *coefficient_derivatives* was specified.
+        #     Then the gradient must be applied to terms such as w*df.
+        return apply_derivatives(Grad(op))
 
     def nabla_grad(self, o, op):
         if is_cellwise_constant(op):
