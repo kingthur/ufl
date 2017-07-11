@@ -304,3 +304,16 @@ class TestCombined:
         fd = compute_form_data(form)
         pf = fd.preprocessed_form
         a = expand_indices(pf) # This test exists to ensure that this call does not cause an exception.
+
+    def test_derivative_wrt_tuple(self):
+        cell = triangle
+        scalar_element = FiniteElement("CG", cell, degree=1)
+        f = Coefficient(scalar_element)
+        g = Coefficient(scalar_element)
+        vector_element = VectorElement("CG", cell, degree=1, dim=2)
+        w = Argument(vector_element, 0)
+        base_expression = dot(grad(f), grad(g))
+        actual = apply_derivatives(derivative(base_expression, (f, g), w))
+        expected = dot(grad(w[0]), grad(g)) + dot(grad(f), grad(w[1]))
+        expected = apply_derivatives(expected) # Push grads inside indexing.
+        assert equal_up_to_index_relabelling(actual, expected)
