@@ -578,6 +578,24 @@ class GradRuleset(GenericDerivativeRuleset):
     cell_avg = GenericDerivativeRuleset.independent_operator
     facet_avg = GenericDerivativeRuleset.independent_operator
 
+    def dot(self, o, grad_f, grad_g):
+        f, g = o.ufl_operands
+        fi = indices(len(f.ufl_shape)-1)
+        gi = indices(len(g.ufl_shape)-1)
+        grad_index = indices(1)
+        sum_index = indices(1)
+        term1 = grad_f[fi + sum_index + grad_index] * g[sum_index + gi]
+        term2 = f[fi + sum_index] * grad_g[sum_index + gi + grad_index]
+        return as_tensor(term1 + term2, fi + gi + grad_index)
+
+    def inner(self, o, grad_f, grad_g):
+        f, g = o.ufl_operands
+        ii = indices(len(f.ufl_shape))
+        grad_index = indices(1)
+        term1 = grad_f[ii + grad_index] * g[ii]
+        term2 = f[ii] * grad_g[ii + grad_index]
+        return as_tensor(term1 + term2, grad_index)
+
 
 class NablaGradRuleset(GenericDerivativeRuleset):
     def __init__(self, geometric_dimension):

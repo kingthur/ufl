@@ -226,6 +226,20 @@ class TestCoefficientDerivativeOfCurl:
         expected = curl(w)
         assert equal_up_to_index_relabelling(actual, expected)
 
+class TestGradientOfDot:
+    def test_simple(self, context):
+        f, g, w, element = context.tensor(dim1=3, dim2=3, cell=triangle)
+        base_expression = dot(f, g)
+        actual = apply_derivatives(grad(base_expression))
+        # We test only that this call actually succeeds.
+
+class TestGradientOfInner:
+    def test_simple(self, context):
+        f, g, w, element = context.tensor(dim1=3, dim2=2)
+        base_expression = inner(f, g)
+        actual = apply_derivatives(grad(base_expression))
+        # We test only that this call actually succeeds.
+
 class TestCombined:
     def test_dot_grad(self, context):
         f, g, w, element = context.scalar()
