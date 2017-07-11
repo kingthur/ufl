@@ -151,103 +151,103 @@ def context():
             return self.return_values(element)
     return Context()
 
-class TestDotDerivative:
-    def testLeftSimple(self, context):
+class TestCoefficientDerivativeOfDot:
+    def test_left_simple(self, context):
         f, g, w, element = context.tensor(dim1=3, dim2=3)
-        baseExpression = dot(f, g)
-        result = apply_derivatives(derivative(baseExpression, f, w))
-        expectedResult = dot(w, g)
-        assert equal_up_to_index_relabelling(result, expectedResult)
+        base_expression = dot(f, g)
+        actual = apply_derivatives(derivative(base_expression, f, w))
+        expected = dot(w, g)
+        assert equal_up_to_index_relabelling(actual, expected)
 
-    def testRightSimple(self, context):
+    def test_right_simple(self, context):
         f, g, w, element = context.vector(dim=4)
-        baseExpression = dot(f, g)
-        result = apply_derivatives(derivative(baseExpression, g, w))
-        expectedResult = dot(f, w)
-        assert equal_up_to_index_relabelling(result, expectedResult)
+        base_expression = dot(f, g)
+        actual = apply_derivatives(derivative(base_expression, g, w))
+        expected = dot(f, w)
+        assert equal_up_to_index_relabelling(actual, expected)
 
-    def testBothSimple(self, context):
+    def test_both_simple(self, context):
         f, g, w, element = context.tensor(dim1=3, dim2=3)
-        baseExpression = dot(f, f)
-        result = apply_derivatives(derivative(baseExpression, f, w))
-        expectedResult = dot(w, f) + dot(f, w) # NB: not 2*dot(w, f).
-        assert equal_up_to_index_relabelling(result, expectedResult)
+        base_expression = dot(f, f)
+        actual = apply_derivatives(derivative(base_expression, f, w))
+        expected = dot(w, f) + dot(f, w) # NB: not 2*dot(w, f).
+        assert equal_up_to_index_relabelling(actual, expected)
 
-class TestInnerDerivative:
-    def testLeftSimple(self, context):
+class TestCoefficientDerivativeOfInner:
+    def test_left_simple(self, context):
         f, g, w, element = context.tensor(dim1=2, dim2=3)
-        baseExpression = inner(f, g)
-        result = apply_derivatives(derivative(baseExpression, f, w))
-        expectedResult = inner(w, g)
-        assert equal_up_to_index_relabelling(result, expectedResult)
+        base_expression = inner(f, g)
+        actual = apply_derivatives(derivative(base_expression, f, w))
+        expected = inner(w, g)
+        assert equal_up_to_index_relabelling(actual, expected)
 
-    def testRightSimple(self, context):
+    def test_right_simple(self, context):
         f, g, w, element = context.vector(dim=4)
-        baseExpression = inner(f, g)
-        result = apply_derivatives(derivative(baseExpression, g, w))
-        expectedResult = inner(f, w)
-        assert equal_up_to_index_relabelling(result, expectedResult)
+        base_expression = inner(f, g)
+        actual = apply_derivatives(derivative(base_expression, g, w))
+        expected = inner(f, w)
+        assert equal_up_to_index_relabelling(actual, expected)
 
-    def testBothSimple(self, context):
+    def test_both_simple(self, context):
         f, g, w, element = context.tensor(dim1=3, dim2=2)
-        baseExpression = inner(f, f)
-        result = apply_derivatives(derivative(baseExpression, f, w))
-        expectedResult = inner(w, f) + inner(f, w) # NB: not 2*inner(w, f).
-        assert equal_up_to_index_relabelling(result, expectedResult)
+        base_expression = inner(f, f)
+        actual = apply_derivatives(derivative(base_expression, f, w))
+        expected = inner(w, f) + inner(f, w) # NB: not 2*inner(w, f).
+        assert equal_up_to_index_relabelling(actual, expected)
 
-class TestGradDerivative:
-    def testSimple(self, context):
+class TestCoefficientDerivativeOfGrad:
+    def test_simple(self, context):
         f, g, w, element = context.vector(dim=3)
-        baseExpression = grad(f)
-        result = apply_derivatives(derivative(baseExpression, f, w))
-        expectedResult = grad(w)
-        assert equal_up_to_index_relabelling(result, expectedResult)
+        base_expression = grad(f)
+        actual = apply_derivatives(derivative(base_expression, f, w))
+        expected = grad(w)
+        assert equal_up_to_index_relabelling(actual, expected)
 
-class TestDivDerivative:
-    def testSimple2D(self, context):
+class TestCoefficientDerivativeOfDiv:
+    def test_simple_2D(self, context):
         f, g, w, element = context.vector(dim=2)
-        baseExpression = div(f)
-        result = apply_derivatives(derivative(baseExpression, f, w))
-        expectedResult = div(w)
-        assert equal_up_to_index_relabelling(result, expectedResult)
+        base_expression = div(f)
+        actual = apply_derivatives(derivative(base_expression, f, w))
+        expected = div(w)
+        assert equal_up_to_index_relabelling(actual, expected)
 
-    def testSimple3D(self, context):
+    def test_simple_3D(self, context):
         f, g, w, element = context.vector(dim=3, cell=tetrahedron)
-        baseExpression = div(f)
-        result = apply_derivatives(derivative(baseExpression, f, w))
-        expectedResult = div(w)
-        assert equal_up_to_index_relabelling(result, expectedResult)
+        base_expression = div(f)
+        actual = apply_derivatives(derivative(base_expression, f, w))
+        expected = div(w)
+        assert equal_up_to_index_relabelling(actual, expected)
 
-class TestCurlDerivative:
-    def testSimple(self, context):
+class TestCoefficientDerivativeOfCurl:
+    def test_simple(self, context):
         f, g, w, element = context.vector(dim=3, cell=tetrahedron)
-        baseExpression = curl(f)
-        result = apply_derivatives(derivative(baseExpression, f, w))
-        expectedResult = curl(w)
-        assert equal_up_to_index_relabelling(result, expectedResult)
+        base_expression = curl(f)
+        actual = apply_derivatives(derivative(base_expression, f, w))
+        expected = curl(w)
+        assert equal_up_to_index_relabelling(actual, expected)
 
 class TestCombined:
-    def testDotGrad(self, context):
+    def test_dot_grad(self, context):
         f, g, w, element = context.scalar()
-        baseExpression = dot(grad(f), grad(g))
-        result = apply_derivatives(derivative(baseExpression, f, w))
-        expectedResult = dot(grad(w), grad(g))
-        assert equal_up_to_index_relabelling(result, expectedResult)
+        base_expression = dot(grad(f), grad(g))
+        actual = apply_derivatives(derivative(base_expression, f, w))
+        expected = dot(grad(w), grad(g))
+        assert equal_up_to_index_relabelling(actual, expected)
 
-    def testDotGradMultiply(self, context):
+    def test_dot_grad_multiply(self, context):
         f, g, w, element = context.scalar()
-        baseExpression = dot(grad(f), f * grad(g))
-        result = apply_derivatives(derivative(baseExpression, f, w))
-        expectedResult = dot(grad(w), f * grad(g)) + dot(grad(f), w * grad(g))
-        assert equal_up_to_index_relabelling(result, expectedResult)
+        base_expression = dot(grad(f), f * grad(g))
+        actual = apply_derivatives(derivative(base_expression, f, w))
+        expected = dot(grad(w), f * grad(g)) + dot(grad(f), w * grad(g))
+        assert equal_up_to_index_relabelling(actual, expected)
 
-    def testSpecifiedCoefficientDerivatives(self, context):
+    def test_specified_coefficient_derivatives(self, context):
         f, g, w, element = context.scalar()
-        baseExpression = dot(grad(f), grad(g))
+        base_expression = dot(grad(f), grad(g))
         h = Coefficient(element)
         df = Coefficient(element)
         dg = Coefficient(element)
-        result = apply_derivatives(derivative(baseExpression, h, w, {f: df, g:dg}))
+        actual = apply_derivatives(derivative(base_expression, h, w, {f: df, g:dg}))
         # The expected result is really
         # dot(grad(w)*df + w*grad(df), grad(g))
         # + dot(grad(f), grad(w)*dg + w*grad(dg))
@@ -255,7 +255,7 @@ class TestCombined:
         # component tensors, while the actual result has component
         # tensors of sums. Accordingly, we have to expand this
         # ourselves.
-        expectedResult = (
+        expected = (
             dot(ComponentTensor(Indexed(grad(w), MultiIndex((i,)))*df
                                 + w*Indexed(grad(df), MultiIndex((i,))),
                                 MultiIndex((i,))),
@@ -265,14 +265,14 @@ class TestCombined:
                                   + w*Indexed(grad(dg), MultiIndex((i,))),
                                   MultiIndex((i,))))
             )
-        assert equal_up_to_index_relabelling(result, expectedResult)
+        assert equal_up_to_index_relabelling(actual, expected)
 
-    def testInnerGrad(self, context):
+    def test_inner_grad(self, context):
         f, g, w, element = context.tensor(dim1=2, dim2=3)
-        baseExpression = inner(grad(f), grad(g))
-        result = apply_derivatives(derivative(baseExpression, f, w))
-        expectedResult = inner(grad(w), grad(g))
-        assert equal_up_to_index_relabelling(result, expectedResult)
+        base_expression = inner(grad(f), grad(g))
+        actual = apply_derivatives(derivative(base_expression, f, w))
+        expected = inner(grad(w), grad(g))
+        assert equal_up_to_index_relabelling(actual, expected)
 
     def test_component_derivative(self):
         # Simpler test of a use-case shown first by
