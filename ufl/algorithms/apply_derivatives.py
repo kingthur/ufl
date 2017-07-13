@@ -701,7 +701,7 @@ class CurlRuleset(GenericDerivativeRuleset):
         return Curl(o)
 
     def argument(self, o):
-        return Div(o)
+        return Curl(o)
 
     def grad(self, o):
         """Curl of grad is zero."""
