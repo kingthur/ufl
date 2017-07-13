@@ -1015,17 +1015,22 @@ class GateauxDerivativeRuleset(GenericDerivativeRuleset):
     def nabla_grad(self, o, op):
         if is_cellwise_constant(op):
             return self.independent_operator(o)
-        return NablaGrad(op)
+        return apply_derivatives(NablaGrad(op))
 
     def div(self, o, op):
         if is_cellwise_constant(op):
             return self.independent_operator(o)
         return Div(op)
 
+    def nabla_div(self, o, op):
+        if is_cellwise_constant(op):
+            return self.independent_operator(o)
+        return apply_derivatives(NablaDiv(op))
+
     def curl(self, o, op):
         if is_cellwise_constant(op):
             return self.independent_operator(o)
-        return Curl(op)
+        return apply_derivatives(Curl(op))
 
     def dot(self, o, fp, gp):
         f, g = o.ufl_operands
