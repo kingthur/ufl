@@ -88,6 +88,10 @@ class ArityChecker(MultiFunction):
     grad = linear_operator
     reference_grad = linear_operator
     reference_value = linear_operator
+    nabla_grad = linear_operator
+    div = linear_operator
+    nabla_div = linear_operator
+    curl = linear_operator
 
     # Does it make sense to have a Variable(Argument)? I see no
     # problem.
