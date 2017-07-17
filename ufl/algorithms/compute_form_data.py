@@ -37,6 +37,7 @@ from ufl.algorithms.apply_algebra_lowering import apply_algebra_lowering
 from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.algorithms.apply_integral_scaling import apply_integral_scaling
 from ufl.algorithms.apply_geometry_lowering import apply_geometry_lowering
+from ufl.algorithms.apply_minimal_algebra_lowering import apply_minimal_algebra_lowering
 from ufl.algorithms.apply_restrictions import apply_restrictions, apply_default_restrictions
 from ufl.algorithms.estimate_degrees import estimate_total_polynomial_degree
 
@@ -241,10 +242,10 @@ def compute_form_data(form,
     # Note: Default behaviour here will process form the way that is
     # currently expected by vanilla FFC
 
-    # Lower abstractions for tensor-algebra types into index notation,
-    # reducing the number of operators later algorithms and form
-    # compilers need to handle
-    form = apply_algebra_lowering(form)
+    # Lower difficult abstractions (e.g. cofactor matrix) for
+    # application of derivatives, but leave vector operators (dot,
+    # inner, grad, div, curl) intact.
+    form = apply_minimal_algebra_lowering(form)
 
     # Apply differentiation before function pullbacks, because for
     # example coefficient derivatives are more complicated to derive
@@ -276,6 +277,14 @@ def compute_form_data(form,
     # Scale integrals to reference cell frames
     if do_apply_integral_scaling:
         form = apply_integral_scaling(form)
+
+    # Lower abstractions for tensor-algebra types into index notation,
+    # reducing the number of operators later algorithms and form
+    # compilers need to handle
+    form = apply_algebra_lowering(form)
+
+    # Apply derivatives that have appeared in the algebra lowering.
+    form = apply_derivatives(form)
 
     # Apply default restriction to fully continuous terminals
     if do_apply_default_restrictions:
