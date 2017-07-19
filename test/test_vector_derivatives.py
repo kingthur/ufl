@@ -317,3 +317,31 @@ class TestCombined:
         expected = dot(grad(w[0]), grad(g)) + dot(grad(f), grad(w[1]))
         expected = apply_derivatives(expected) # Push grads inside indexing.
         assert equal_up_to_index_relabelling(actual, expected)
+
+    def test_grad_spatial_coordinate_shape(self, context):
+        # Checks that the geometric dimension assigned to GradRuleset
+        # in DerivativeRuleDispatcher is correct.
+        cell = tetrahedron
+        element = VectorElement("CG", cell, degree=1, dim=2)
+        x = SpatialCoordinate(element.cell()) # shape: (3,)
+        y = Coefficient(element) # (2,)
+        w = grad(grad(y)) # (2, 3, 3)
+        z = dot(w, x) # (2, 3)
+        expr = grad(z) # (2, 3, 3)
+        assert expr.ufl_shape == (2, 3, 3)
+        expr = apply_derivatives(expr)
+        assert expr.ufl_shape == (2, 3, 3)
+
+    def test_nabla_grad_spatial_coordinate_shape(self, context):
+        # Checks that the geometric dimension assigned to GradRuleset
+        # in DerivativeRuleDispatcher is correct.
+        cell = tetrahedron
+        element = VectorElement("CG", cell, degree=1, dim=2)
+        x = SpatialCoordinate(element.cell()) # shape: (3,)
+        y = Coefficient(element) # (2,)
+        w = nabla_grad(nabla_grad(y)) # (3, 3, 2)
+        z = dot(x, w) # (3, 2)
+        expr = nabla_grad(z) # (3, 3, 2)
+        assert expr.ufl_shape == (3, 3, 2)
+        expr = apply_derivatives(expr)
+        assert expr.ufl_shape == (3, 3, 2)

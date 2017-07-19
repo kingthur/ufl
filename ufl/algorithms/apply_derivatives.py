@@ -1076,7 +1076,7 @@ class DerivativeRuleDispatcher(MultiFunction):
         return map_expr_dag(rules, f)
 
     def nabla_grad(self, o, f):
-        rules = NablaGradRuleset(o.ufl_shape[-1])
+        rules = NablaGradRuleset(o.ufl_shape[0])
         return map_expr_dag(rules, f)
 
     def div(self, o, f):
