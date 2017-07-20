@@ -1041,7 +1041,7 @@ class GateauxDerivativeRuleset(GenericDerivativeRuleset):
     def div(self, o, op):
         if is_cellwise_constant(op):
             return self.independent_operator(o)
-        return Div(op)
+        return apply_derivatives(Div(op))
 
     def nabla_div(self, o, op):
         if is_cellwise_constant(op):
