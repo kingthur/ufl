@@ -580,13 +580,16 @@ class GradRuleset(GenericDerivativeRuleset):
 
     def dot(self, o, grad_f, grad_g):
         f, g = o.ufl_operands
-        fi = indices(len(f.ufl_shape)-1)
-        gi = indices(len(g.ufl_shape)-1)
-        grad_index = indices(1)
-        sum_index = indices(1)
-        term1 = grad_f[fi + sum_index + grad_index] * g[sum_index + gi]
-        term2 = f[fi + sum_index] * grad_g[sum_index + gi + grad_index]
-        return as_tensor(term1 + term2, fi + gi + grad_index)
+        if len(f.ufl_shape) == 1 and len(g.ufl_shape) == 1:
+            return Dot(g, grad_f) + Dot(f, grad_g)
+        else:
+            fi = indices(len(f.ufl_shape)-1)
+            gi = indices(len(g.ufl_shape)-1)
+            grad_index = indices(1)
+            sum_index = indices(1)
+            term1 = grad_f[fi + sum_index + grad_index] * g[sum_index + gi]
+            term2 = f[fi + sum_index] * grad_g[sum_index + gi + grad_index]
+            return as_tensor(term1 + term2, fi + gi + grad_index)
 
     def inner(self, o, grad_f, grad_g):
         f, g = o.ufl_operands
