@@ -33,9 +33,10 @@ from ufl.corealg.multifunction import MultiFunction
 from ufl.algorithms.map_integrands import map_integrand_dags
 
 
-class LowerCompoundAlgebra(MultiFunction):
-    """Expands high level compound operators (e.g. inner) to equivalent
-    representations using basic operators (e.g. index notation)."""
+class LowerIntractableCompoundAlgebra(MultiFunction):
+    """Expands intractable high level compound operators
+    (e.g. cofactor but not dot) to equivalent representations using
+    basic operators."""
     def __init__(self):
         MultiFunction.__init__(self)
 
@@ -74,6 +75,29 @@ class LowerCompoundAlgebra(MultiFunction):
         def c(i, j):
             return Product(a[i], b[j]) - Product(a[j], b[i])
         return as_vector((c(1, 2), c(2, 0), c(0, 1)))
+
+    def outer(self, o, a, b):
+        ii = indices(len(a.ufl_shape))
+        jj = indices(len(b.ufl_shape))
+        # Create a Product with no shared indices
+        s = a[ii]*b[jj]
+        return as_tensor(s, ii+jj)
+
+    def determinant(self, o, A):
+        return determinant_expr(A)
+
+    def cofactor(self, o, A):
+        return cofactor_expr(A)
+
+    def inverse(self, o, A):
+        return inverse_expr(A)
+
+
+class LowerAllCompoundAlgebra(LowerIntractableCompoundAlgebra):
+    """Expands high level compound operators (e.g. inner) to equivalent
+    representations using basic operators (e.g. index notation)."""
+    def __init__(self):
+        LowerIntractableCompoundAlgebra.__init__(self)
 
     def altenative_dot(self, o, a, b):  # TODO: Test this
         ash = a.ufl_shape
@@ -128,22 +152,6 @@ class LowerCompoundAlgebra(MultiFunction):
         s = a[ii]*b[ii]
         return s
 
-    def outer(self, o, a, b):
-        ii = indices(len(a.ufl_shape))
-        jj = indices(len(b.ufl_shape))
-        # Create a Product with no shared indices
-        s = a[ii]*b[jj]
-        return as_tensor(s, ii+jj)
-
-    def determinant(self, o, A):
-        return determinant_expr(A)
-
-    def cofactor(self, o, A):
-        return cofactor_expr(A)
-
-    def inverse(self, o, A):
-        return inverse_expr(A)
-
     # ------------ Compound differential operators
 
     def div(self, o, a):
@@ -182,4 +190,10 @@ class LowerCompoundAlgebra(MultiFunction):
 def apply_algebra_lowering(expr):
     """Expands high level compound operators (e.g. inner) to equivalent
     representations using basic operators (e.g. index notation)."""
-    return map_integrand_dags(LowerCompoundAlgebra(), expr)
+    return map_integrand_dags(LowerAllCompoundAlgebra(), expr)
+
+def apply_minimal_algebra_lowering(expr):
+    """Expands intractable high level compound operators
+    (e.g. cofactor but not dot) to equivalent representations using
+    basic operators."""
+    return map_integrand_dags(LowerIntractableCompoundAlgebra(), expr)
