@@ -594,11 +594,17 @@ class GradRuleset(GenericDerivativeRuleset):
 
     def inner(self, o, grad_f, grad_g):
         f, g = o.ufl_operands
-        ii = indices(len(f.ufl_shape))
-        grad_index = indices(1)
-        term1 = grad_f[ii + grad_index] * g[ii]
-        term2 = f[ii] * grad_g[ii + grad_index]
-        return as_tensor(term1 + term2, grad_index)
+        if len(f.ufl_shape) == 1 and len(g.ufl_shape) == 1:
+            # Assumes that the field of scalars is the reals.
+            # Will become obsolete if inner products of vectors are
+            # reduced to dot products in the __new__ method of Inner.
+            return Dot(g, grad_f) + Dot(f, grad_g)
+        else:
+            ii = indices(len(f.ufl_shape))
+            grad_index = indices(1)
+            term1 = grad_f[ii + grad_index] * g[ii]
+            term2 = f[ii] * grad_g[ii + grad_index]
+            return as_tensor(term1 + term2, grad_index)
 
 
 class NablaGradRuleset(GenericDerivativeRuleset):
@@ -658,11 +664,17 @@ class NablaGradRuleset(GenericDerivativeRuleset):
 
     def inner(self, o, grad_f, grad_g):
         f, g = o.ufl_operands
-        ii = indices(len(f.ufl_shape))
-        grad_index = indices(1)
-        term1 = grad_f[grad_index + ii] * g[ii]
-        term2 = f[ii] * grad_g[grad_index + ii]
-        return as_tensor(term1 + term2, grad_index)
+        if len(f.ufl_shape) == 1 and len(g.ufl_shape) == 1:
+            # Assumes that the field of scalars is the reals.
+            # Will become obsolete if inner products of vectors are
+            # reduced to dot products in the __new__ method of Inner.
+            return Dot(grad_f, g) + Dot(grad_g, f)
+        else:
+            ii = indices(len(f.ufl_shape))
+            grad_index = indices(1)
+            term1 = grad_f[grad_index + ii] * g[ii]
+            term2 = f[ii] * grad_g[grad_index + ii]
+            return as_tensor(term1 + term2, grad_index)
 
 
 class DivRuleset(GenericDerivativeRuleset):
