@@ -581,6 +581,7 @@ class GradRuleset(GenericDerivativeRuleset):
     def dot(self, o, grad_f, grad_g):
         f, g = o.ufl_operands
         if len(f.ufl_shape) == 1 and len(g.ufl_shape) == 1:
+            # Assumes that the field of scalars is the reals.
             return Dot(g, grad_f) + Dot(f, grad_g)
         else:
             fi = indices(len(f.ufl_shape)-1)
@@ -644,6 +645,7 @@ class NablaGradRuleset(GenericDerivativeRuleset):
     def dot(self, o, grad_f, grad_g):
         f, g = o.ufl_operands
         if len(f.ufl_shape) == 1 and len(g.ufl_shape) == 1:
+            # Assumes that the field of scalars is the reals.
             return Dot(grad_f, g) + Dot(grad_g, f)
         else:
             fi = indices(len(f.ufl_shape)-1)
