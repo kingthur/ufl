@@ -240,6 +240,55 @@ class TestGradientOfInner:
         actual = apply_derivatives(grad(base_expression))
         # We test only that this call actually succeeds.
 
+class TestDiv:
+    def test_list_tensor_of_scalars(self, context):
+        f, g, w, element = context.scalar()
+        base_expression = as_tensor([f, g])
+        actual = apply_derivatives(div(base_expression))
+        expected = div(base_expression)
+        assert equal_up_to_index_relabelling(actual, expected)
+
+    def test_list_tensor_of_vectors(self, context):
+        f, g, w, element = context.vector(dim=3, cell=tetrahedron)
+        base_expression = as_tensor([f, g])
+        assert base_expression.ufl_shape == (2, 3)
+        actual = apply_derivatives(div(base_expression))
+        assert actual.ufl_shape == (2,)
+        expected = as_tensor([div(f), div(g)])
+        assert equal_up_to_index_relabelling(actual, expected)
+
+    def test_vector_component_tensor(self, context):
+        f, g, w, element = context.vector(dim=3, cell=tetrahedron)
+        ii = MultiIndex((Index(),))
+        base_expression = ComponentTensor(Indexed(f, ii), ii)
+        # Check that no simplification has occurred.
+        assert type(base_expression) == ComponentTensor
+        actual = apply_derivatives(div(base_expression))
+        expected = div(base_expression)
+        assert equal_up_to_index_relabelling(actual, expected)
+
+    def test_tensor_component_tensor(self, context):
+        # Note here that the Div might in principle pass through the
+        # ComponentTensor, but it does not here for reasons commented
+        # in the implementation.
+        f, g, w, element = context.tensor(dim1=2, dim2=3, cell=tetrahedron)
+        ii, jj = indices(2)
+        iijj = MultiIndex((ii, jj))
+        base_expression = ComponentTensor(Indexed(f, iijj), iijj)
+        # Check that no simplification has occurred.
+        assert type(base_expression) == ComponentTensor
+        actual = apply_derivatives(div(base_expression))
+        expected = div(base_expression)
+        assert equal_up_to_index_relabelling(actual, expected)
+
+    def test_indexed(self, context):
+        f, g, w, element = context.vector(dim=3, cell=tetrahedron)
+        base_expression = as_tensor([f, g])[1]
+        actual = apply_derivatives(div(base_expression))
+        expected = div(base_expression)
+        assert equal_up_to_index_relabelling(actual, expected)
+
+
 class TestCombined:
     def test_dot_grad(self, context):
         f, g, w, element = context.scalar()

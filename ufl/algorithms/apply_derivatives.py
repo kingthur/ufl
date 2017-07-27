@@ -53,7 +53,6 @@ from ufl.checks import is_cellwise_constant
 
 # TODO: Add more rulesets?
 # - ReferenceGradRuleset
-# - ReferenceDivRuleset
 
 
 # Set this to True to enable previously default workaround
@@ -713,6 +712,39 @@ class DivRuleset(GenericDerivativeRuleset):
         return Div(o)
 
     def grad(self, o):
+        return Div(o)
+
+    def list_tensor(self, o):
+        # If the arguments to a ListTensor are scalar, then the
+        # divergence operator cannot pass through the
+        # ListTensor. However, if they are tensors, then since
+        # ListTensor prepends an axis, the Div can be taken though the
+        # ListTensor.
+        # We have to leave this as a cutoff type (i.e. not have more
+        # arguments) and directly implement the tensor case in order
+        # to avoid trying to take the Div of a scalar.
+        if len(o.ufl_shape) <= 1:
+            return Div(o)
+        else:
+            div_components = (apply_derivatives(Div(comp)) for comp in o.ufl_operands)
+            return ListTensor(*div_components)
+
+    def component_tensor(self, o):
+        # The expression in a ComponentTensor can only be
+        # scalar-valued. Thus, if there is only one index, then the
+        # Div cannot be taken through the ComponentTensor. If there is
+        # more than one index, then it should be possible for the Div
+        # to be taken through the ComponentTensor, but free indices in
+        # the argument to Div are not allowed, so this cannot be
+        # implemented (at least without using a ListTensor instead).
+        return Div(o)
+
+    def indexed(self, o):
+        # Taking the div of an indexed quantity makes sense, as such
+        # quantities need not be scalars (though we can take the div
+        # of a scalar) and may not even be wrapped by component
+        # tensors if the indices are fixed. But we cannot interchange
+        # the indexing and the divergence operator.
         return Div(o)
 
     cell_avg = GenericDerivativeRuleset.independent_operator
