@@ -281,13 +281,6 @@ class TestDiv:
         expected = div(base_expression)
         assert equal_up_to_index_relabelling(actual, expected)
 
-    def test_indexed(self, context):
-        f, g, w, element = context.vector(dim=3, cell=tetrahedron)
-        base_expression = as_tensor([f, g])[1]
-        actual = apply_derivatives(div(base_expression))
-        expected = div(base_expression)
-        assert equal_up_to_index_relabelling(actual, expected)
-
 
 class TestCurl:
     def test_list_tensor(self, context):
@@ -304,13 +297,6 @@ class TestCurl:
         base_expression = ComponentTensor(Indexed(f, ii), ii)
         # Check that no simplification has occurred.
         assert type(base_expression) == ComponentTensor
-        actual = apply_derivatives(curl(base_expression))
-        expected = curl(base_expression)
-        assert equal_up_to_index_relabelling(actual, expected)
-
-    def test_indexed(self, context):
-        f, g, w, element = context.vector(dim=3, cell=tetrahedron)
-        base_expression = as_tensor([f, g])[1]
         actual = apply_derivatives(curl(base_expression))
         expected = curl(base_expression)
         assert equal_up_to_index_relabelling(actual, expected)
