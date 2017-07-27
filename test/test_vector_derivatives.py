@@ -289,6 +289,33 @@ class TestDiv:
         assert equal_up_to_index_relabelling(actual, expected)
 
 
+class TestCurl:
+    def test_list_tensor(self, context):
+        f, g, w, element = context.scalar(cell=tetrahedron)
+        h = Coefficient(element)
+        base_expression = as_tensor([f, g, h])
+        actual = apply_derivatives(curl(base_expression))
+        expected = curl(base_expression)
+        assert equal_up_to_index_relabelling(actual, expected)
+
+    def test_component_tensor(self, context):
+        f, g, w, element = context.vector(dim=3, cell=tetrahedron)
+        ii = MultiIndex((Index(),))
+        base_expression = ComponentTensor(Indexed(f, ii), ii)
+        # Check that no simplification has occurred.
+        assert type(base_expression) == ComponentTensor
+        actual = apply_derivatives(curl(base_expression))
+        expected = curl(base_expression)
+        assert equal_up_to_index_relabelling(actual, expected)
+
+    def test_indexed(self, context):
+        f, g, w, element = context.vector(dim=3, cell=tetrahedron)
+        base_expression = as_tensor([f, g])[1]
+        actual = apply_derivatives(curl(base_expression))
+        expected = curl(base_expression)
+        assert equal_up_to_index_relabelling(actual, expected)
+
+
 class TestCombined:
     def test_dot_grad(self, context):
         f, g, w, element = context.scalar()

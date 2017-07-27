@@ -777,6 +777,26 @@ class CurlRuleset(GenericDerivativeRuleset):
         """Curl of grad is zero."""
         return self.independent_operator(o)
 
+    def list_tensor(self, o):
+        # The argument to curl is guaranteed to be a scalar, a 2D
+        # vector or a 3D vector, so the curl operator cannot pass
+        # through the ListTensor.
+        return Curl(o)
+
+    def component_tensor(self, o):
+        # The argument to curl is guaranteed to be a scalar, a 2D
+        # vector or a 3D vector, so the curl operator cannot pass
+        # through the ComponentTensor.
+        return Curl(o)
+
+    def indexed(self, o):
+        # Taking the curl of an indexed quantity makes sense, as such
+        # quantities need not be scalars (though we can take the curl
+        # of a scalar) and may not even be wrapped by component
+        # tensors if the indices are fixed. But we cannot interchange
+        # the indexing and the curl operator.
+        return Curl(o)
+
     cell_avg = GenericDerivativeRuleset.independent_operator
     facet_avg = GenericDerivativeRuleset.independent_operator
 
