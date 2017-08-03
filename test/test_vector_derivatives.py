@@ -11,8 +11,10 @@ from ufl.algorithms.expand_indices import expand_indices
 from ufl.core.multiindex import MultiIndex, FixedIndex
 from ufl.core.operator import Operator
 from ufl.corealg.traversal import post_traversal
+from ufl.differentiation import ReferenceGrad
 from ufl.indexed import Indexed
 from ufl.indexsum import IndexSum
+from ufl.referencevalue import ReferenceValue
 from ufl.tensors import ComponentTensor
 from itertools import izip_longest
 import pytest
@@ -421,3 +423,29 @@ class TestCombined:
         assert expr.ufl_shape == (3, 3, 2)
         expr = apply_derivatives(expr)
         assert expr.ufl_shape == (3, 3, 2)
+
+
+def transform(expr):
+    form = expr * dx
+    form_data = compute_form_data(form, do_apply_function_pullbacks=True)
+    return form_data.preprocessed_form.integrals()[0]._integrand
+    # # Transform as for compute_form_data with
+    # # do_apply_function_pullbacks=True
+    # expr = apply_minimal_algebra_lowering(expr)
+    # expr = apply_derivatives(expr)
+    # expr = apply_function_pullbacks(expr)
+    # expr = apply_integral_scaling(expr)
+    # expr = apply_algebra_lowering(expr)
+    # expr = apply_derivatives(expr)
+    # return expr
+        
+class TestPullbacks():
+    def test_grad_pullback(self, context):
+        f, g, w, element = context.vector(dim=3, cell=triangle)
+        base_expression = inner(grad(f), grad(g))
+        actual = transform(base_expression)
+        K = JacobianInverse(f.ufl_domain()) # Mesh(VectorElement(FiniteElement('Lagrange', triangle, 1), dim=2), -1))
+        expected = inner(dot(ReferenceGrad(ReferenceValue(f)), K),
+                         dot(ReferenceGrad(ReferenceValue(g)), K))
+        expected = apply_algebra_lowering(expected)
+        assert equal_up_to_index_relabelling(actual, expected)
