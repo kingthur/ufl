@@ -272,6 +272,11 @@ def compute_form_data(form,
         #           Domain.  Current dolfin works if Expression has a
         #           cell but this should be changed to a mesh.
         form = apply_function_pullbacks(form)
+        # This may introduce expressions to which derivatives can be
+        # applied, such as Grad(ReferenceValue(...)), which must be
+        # reduced to Dot(ReferenceGrad(...), JacobianInverse(...))
+        # before the algebra lowering occurs.
+        form = apply_derivatives(form)
 
     # Scale integrals to reference cell frames
     if do_apply_integral_scaling:

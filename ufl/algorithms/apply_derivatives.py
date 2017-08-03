@@ -528,16 +528,11 @@ class GradRuleset(GenericDerivativeRuleset):
     # --- Rules for values or derivatives in reference frame
 
     def reference_value(self, o):
-        # grad(o) == grad(rv(f)) -> K_ji*rgrad(rv(f))_rj
-        f = o.ufl_operands[0]
+        f, = o.ufl_operands
         if not f._ufl_is_terminal_:
             error("ReferenceValue can only wrap a terminal")
-        domain = f.ufl_domain()
-        K = JacobianInverse(domain)
-        r = indices(len(o.ufl_shape))
-        i, j = indices(2)
-        Do = as_tensor(K[j, i]*ReferenceGrad(o)[r + (j,)], r + (i,))
-        return Do
+        K = JacobianInverse(f.ufl_domain())
+        return Dot(ReferenceGrad(o), K)
 
     def reference_grad(self, o):
         # grad(o) == grad(rgrad(rv(f))) -> K_ji*rgrad(rgrad(rv(f)))_rj
