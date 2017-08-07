@@ -221,7 +221,6 @@ def test_variable_ruleset():
 def test_gateaux_ruleset():
     pass
 
-@pytest.mark.xfail
 def test_idempotency():
     # This test is a case from test_expand_indices_div_grad in which
     # apply_derivatives used not to be idempotent.

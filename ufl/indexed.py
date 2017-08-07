@@ -28,6 +28,7 @@ from ufl.core.operator import Operator
 from ufl.core.multiindex import Index, FixedIndex, MultiIndex
 from ufl.index_combination_utils import unique_sorted_indices, merge_unique_indices
 from ufl.precedence import parstr
+import ufl.tensors # For ComponentTensor. Not imported as others to avoid cycles.
 
 
 # --- Indexed expression ---
@@ -59,9 +60,6 @@ class Indexed(Operator):
             return Operator.__new__(cls)
 
     def __init__(self, expression, multiindex):
-        # Store operands
-        Operator.__init__(self, (expression, multiindex))
-
         # Error checking
         if not isinstance(expression, Expr):
             error("Expecting Expr instance, not %s." % ufl_err_str(expression))
@@ -79,6 +77,27 @@ class Indexed(Operator):
                for si, di in zip(shape, multiindex)
                if isinstance(di, FixedIndex)):
             error("Fixed index out of range!")
+
+        # Simplify Indexed(ComponentTensor(Indexed(...))).
+        def simplify(A, ii):
+            if isinstance(A, ufl.tensors.ComponentTensor):
+                B, jj = A.ufl_operands
+                if isinstance(B, Indexed):
+                    C, kk = B.ufl_operands
+                    if len(ii) == len(jj) and all(j in kk for j in jj):
+                        mapping = {}
+                        for (new_index, old_index) in zip(ii, jj):
+                            mapping[old_index] = new_index
+                        new_indexing = tuple(mapping.get(index, index) for index in kk)
+                        return C, MultiIndex(new_indexing)
+            return A, ii
+        expression, multiindex = simplify(expression, multiindex)
+        shape = expression.ufl_shape
+
+        # Error checking is not repeated after possible simplification.
+
+        # Store operands
+        Operator.__init__(self, (expression, multiindex))
 
         # Build tuples of free index ids and dimensions
         if 1:

@@ -179,20 +179,7 @@ class GenericDerivativeRuleset(MultiFunction):
         if isinstance(Ap, Zero):
             return self.independent_operator(o)
 
-        # Untangle as_tensor(C[kk], jj)[ii] -> C[ll] to simplify
-        # resulting expression
-        if isinstance(Ap, ComponentTensor):
-            B, jj = Ap.ufl_operands
-            if isinstance(B, Indexed):
-                C, kk = B.ufl_operands
-                kk = list(kk)
-                if all(j in kk for j in jj):
-                    Cind = list(kk)
-                    for i, j in zip(ii, jj):
-                        Cind[kk.index(j)] = i
-                    return Indexed(C, MultiIndex(tuple(Cind)))
-
-        # Otherwise a more generic approach
+        # Add any necessary indices.
         r = len(Ap.ufl_shape) - len(ii)
         if r:
             kk = indices(r)
@@ -1041,21 +1028,7 @@ class DerivativeRuleDispatcher(MultiFunction):
         if Ap is o.ufl_operands[0]:
             return o
 
-        # Untangle as_tensor(C[kk], jj)[ii] -> C[ll] to simplify
-        # resulting expression
-        if isinstance(Ap, ComponentTensor):
-            B, jj = Ap.ufl_operands
-            if isinstance(B, Indexed):
-                C, kk = B.ufl_operands
-
-                kk = list(kk)
-                if all(j in kk for j in jj):
-                    Cind = list(kk)
-                    for i, j in zip(ii, jj):
-                        Cind[kk.index(j)] = i
-                    return Indexed(C, MultiIndex(tuple(Cind)))
-
-        # Otherwise a more generic approach
+        # Add any necessary indices.
         r = len(Ap.ufl_shape) - len(ii)
         if r:
             kk = indices(r)
