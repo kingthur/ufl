@@ -79,20 +79,17 @@ class Indexed(Operator):
             error("Fixed index out of range!")
 
         # Simplify Indexed(ComponentTensor(Indexed(...))).
-        def simplify(A, ii):
-            if isinstance(A, ufl.tensors.ComponentTensor):
-                B, jj = A.ufl_operands
-                if isinstance(B, Indexed):
-                    C, kk = B.ufl_operands
-                    if len(ii) == len(jj) and all(j in kk for j in jj):
-                        mapping = {}
-                        for (new_index, old_index) in zip(ii, jj):
-                            mapping[old_index] = new_index
-                        new_indexing = tuple(mapping.get(index, index) for index in kk)
-                        return C, MultiIndex(new_indexing)
-            return A, ii
-        expression, multiindex = simplify(expression, multiindex)
-        shape = expression.ufl_shape
+        if isinstance(expression, ufl.tensors.ComponentTensor):
+            B, jj = expression.ufl_operands
+            if isinstance(B, Indexed):
+                C, kk = B.ufl_operands
+                if len(multiindex) == len(jj) and all(j in kk for j in jj):
+                    mapping = {}
+                    for (new_index, old_index) in zip(multiindex, jj):
+                        mapping[old_index] = new_index
+                    new_indexing = tuple(mapping.get(index, index) for index in kk)
+                    expression, multiindex = C, MultiIndex(new_indexing)
+                    shape = expression.ufl_shape
 
         # Error checking is not repeated after possible simplification.
 
