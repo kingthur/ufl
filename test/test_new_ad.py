@@ -4,12 +4,17 @@ import pytest
 
 from ufl import *
 
-from ufl.tensors import as_tensor
+from ufl.tensors import as_tensor, ComponentTensor
 from ufl.classes import Grad
 from ufl.algorithms import tree_format
+from ufl.algorithms.apply_algebra_lowering import apply_algebra_lowering
 from ufl.algorithms.renumbering import renumber_indices
 from ufl.algorithms.apply_derivatives import apply_derivatives, GenericDerivativeRuleset, \
     GradRuleset, VariableRuleset, GateauxDerivativeRuleset
+from ufl.core.multiindex import MultiIndex
+from ufl.indexed import Indexed
+from ufl.indexsum import IndexSum
+from equal_up_to_index_relabelling import equal_up_to_index_relabelling
 
 
 # Note: the old tests in test_automatic_differentiation.py are a bit messy
@@ -215,3 +220,25 @@ def test_variable_ruleset():
 
 def test_gateaux_ruleset():
     pass
+
+def test_idempotency():
+    # This test is a case from test_expand_indices_div_grad in which
+    # apply_derivatives used not to be idempotent.
+    cell = triangle
+    element = VectorElement("Lagrange", cell, 1)
+    f = Coefficient(element)
+    expr = div(grad(f))
+    expr = apply_algebra_lowering(expr)
+    expr = apply_derivatives(expr)
+    # Verify that apply_derivatives is idempotent
+    assert expr == apply_derivatives(expr)
+    i, j = indices(2)
+    explicit_result = IndexSum(
+        ComponentTensor(
+            Indexed(Grad(Grad(f)), MultiIndex((i, j, j))),
+            MultiIndex((i,))),
+        MultiIndex((j,)))
+    # Verify that it is not idempotent because we haven't applied
+    # appropriate simplifications, but because we've applied them the
+    # first time around.
+    assert equal_up_to_index_relabelling(expr, explicit_result)
