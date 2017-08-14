@@ -623,7 +623,7 @@ class NablaGradRuleset(GenericDerivativeRuleset):
 
     # --- Nesting of nabla gradients
 
-    def nabla_grad(self, o):
+    def nabla_grad(self, o): # GTODO: Needs an extra argument?
         return NablaGrad(o)
 
     cell_avg = GenericDerivativeRuleset.independent_operator
