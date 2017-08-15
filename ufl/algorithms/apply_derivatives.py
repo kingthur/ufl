@@ -731,14 +731,21 @@ class DivRuleset(GenericDerivativeRuleset):
         return Div(o)
 
     def dot(self, o):
-        # GTODO: Check this
         f, g = o.ufl_operands
-        if len(f.ufl_shape) == 1 and len(g.ufl_shape) == 2:
+        f_dim, g_dim = len(f.ufl_shape), len(g.ufl_shape)
+        if f_dim == 1 and g_dim == 2:
             return apply_derivatives(
                 Inner(Grad(f), g) + Dot(f, Div(g)))
         else:
-            # GTODO
-            assert False
+            # GTODO: Write tests for this case, including the corner cases.
+            ii = indices(f_dim-1) if f_dim > 1 else ()
+            jj = indices(g_dim-2) if g_dim > 2 else ()
+            div_index, sum_index = indices(2)
+            first_term = as_tensor(
+                grad(f)[iii+(sum_index,)+(div_index,)] * g[jj + (div_index,)],
+                iii + jj)
+            second_term = Dot(f, Div(g))
+            return apply_derivatives(first_term + second_term)
 
     cell_avg = GenericDerivativeRuleset.independent_operator
     facet_avg = GenericDerivativeRuleset.independent_operator
