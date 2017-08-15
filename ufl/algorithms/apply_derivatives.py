@@ -29,7 +29,7 @@ from ufl.tensors import as_tensor, as_scalar, as_scalars, unit_indexed_tensor, u
 
 from ufl.classes import ConstantValue, Identity, Zero, FloatValue
 from ufl.classes import Coefficient, FormArgument, ReferenceValue
-from ufl.classes import Grad, NablaGrad, ReferenceGrad, Variable, Div, Curl
+from ufl.classes import Grad, ReferenceGrad, Variable, Div, Curl
 from ufl.classes import Indexed, ListTensor, ComponentTensor
 from ufl.classes import ExprList, ExprMapping
 from ufl.classes import Product, Sum, IndexSum
@@ -589,76 +589,6 @@ class GradRuleset(GenericDerivativeRuleset):
             return as_tensor(term1 + term2, grad_index)
 
 
-class NablaGradRuleset(GenericDerivativeRuleset):
-    def __init__(self, geometric_dimension):
-        GenericDerivativeRuleset.__init__(self, var_shape=(geometric_dimension,))
-        self._Id = Identity(geometric_dimension)
-
-    # --- Specialized rules for geometric quantities
-
-    def geometric_quantity(self, o):
-        """Default for geometric quantities is dg/dx = 0 if piecewise constant, otherwise keep NablaGrad(g).
-        Override for specific types if other behaviour is needed."""
-        if is_cellwise_constant(o):
-            return self.independent_terminal(o)
-        else:
-            return NablaGrad(o)
-
-    def spatial_coordinate(self, o):
-        "dx/dx = I"
-        return self._Id
-
-    def cell_coordinate(self, o):
-        "dX/dx = inv(dx/dX) = inv(J) = K"
-        return JacobianInverse(o.ufl_domain())
-
-    # --- Specialized rules for form arguments
-
-    def coefficient(self, o):
-        if is_cellwise_constant(o):
-            return self.independent_terminal(o)
-        return NablaGrad(o)
-
-    def argument(self, o):
-        return NablaGrad(o)
-
-    # --- Nesting of nabla gradients
-
-    def nabla_grad(self, o): # GTODO: Needs an extra argument?
-        return NablaGrad(o)
-
-    cell_avg = GenericDerivativeRuleset.independent_operator
-    facet_avg = GenericDerivativeRuleset.independent_operator
-
-    def dot(self, o, grad_f, grad_g):
-        f, g = o.ufl_operands
-        if len(f.ufl_shape) == 1 and len(g.ufl_shape) == 1:
-            # Assumes that the field of scalars is the reals.
-            return Dot(grad_f, g) + Dot(grad_g, f)
-        else:
-            fi = indices(len(f.ufl_shape)-1)
-            gi = indices(len(g.ufl_shape)-1)
-            grad_index = indices(1)
-            sum_index = indices(1)
-            term1 = grad_f[grad_index + fi + sum_index] * g[sum_index + gi]
-            term2 = f[fi + sum_index] * grad_g[grad_index + sum_index + gi]
-            return as_tensor(term1 + term2, grad_index + fi + gi)
-
-    def inner(self, o, grad_f, grad_g):
-        f, g = o.ufl_operands
-        if len(f.ufl_shape) == 1 and len(g.ufl_shape) == 1:
-            # Assumes that the field of scalars is the reals.
-            # Will become obsolete if inner products of vectors are
-            # reduced to dot products in the __new__ method of Inner.
-            return Dot(grad_f, g) + Dot(grad_g, f)
-        else:
-            ii = indices(len(f.ufl_shape))
-            grad_index = indices(1)
-            term1 = grad_f[grad_index + ii] * g[ii]
-            term2 = f[ii] * grad_g[grad_index + ii]
-            return as_tensor(term1 + term2, grad_index)
-
-
 class DivRuleset(GenericDerivativeRuleset):
     def __init__(self):
         # var_shape actually needs to *remove* part of the shape. It
@@ -1180,10 +1110,6 @@ class DerivativeRuleDispatcher(MultiFunction):
 
     def grad(self, o, f):
         rules = GradRuleset(o.ufl_shape[-1])
-        return map_expr_dag(rules, f)
-
-    def nabla_grad(self, o, f):
-        rules = NablaGradRuleset(o.ufl_shape[0])
         return map_expr_dag(rules, f)
 
     def div(self, o, f):

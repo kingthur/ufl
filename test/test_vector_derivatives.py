@@ -410,20 +410,6 @@ class TestCombined:
         expr = apply_derivatives(expr)
         assert expr.ufl_shape == (2, 3, 3)
 
-    def test_nabla_grad_spatial_coordinate_shape(self, context):
-        # Checks that the geometric dimension assigned to GradRuleset
-        # in DerivativeRuleDispatcher is correct.
-        cell = tetrahedron
-        element = VectorElement("CG", cell, degree=1, dim=2)
-        x = SpatialCoordinate(element.cell()) # shape: (3,)
-        y = Coefficient(element) # (2,)
-        w = nabla_grad(nabla_grad(y)) # (3, 3, 2)
-        z = dot(x, w) # (3, 2)
-        expr = nabla_grad(z) # (3, 3, 2)
-        assert expr.ufl_shape == (3, 3, 2)
-        expr = apply_derivatives(expr)
-        assert expr.ufl_shape == (3, 3, 2)
-
 
 def transform(expr):
     form = expr * dx
