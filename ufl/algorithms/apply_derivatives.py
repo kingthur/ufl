@@ -694,8 +694,8 @@ class DivRuleset(GenericDerivativeRuleset):
     def argument(self, o):
         return Div(o)
 
-    def grad(self, o):
-        return Div(o)
+    def grad(self, o, a):
+        return Div(a)
 
     def list_tensor(self, o):
         # If the arguments to a ListTensor are scalar, then the
