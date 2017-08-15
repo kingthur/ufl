@@ -48,6 +48,7 @@ from math import pi
 from ufl.corealg.multifunction import MultiFunction
 from ufl.corealg.map_dag import map_expr_dag
 from ufl.algorithms.map_integrands import map_integrand_dags
+from ufl.algorithms.apply_algebra_lowering import apply_algebra_lowering # GTODO for curl reduction.
 
 from ufl.checks import is_cellwise_constant
 
@@ -729,8 +730,31 @@ class DivRuleset(GenericDerivativeRuleset):
         # the indexing and the divergence operator.
         return Div(o)
 
+    def dot(self, o):
+        # GTODO: Check this
+        f, g = o.ufl_operands
+        if len(f.ufl_shape) == 1 and len(g.ufl_shape) == 2:
+            return apply_derivatives(
+                Inner(Grad(f), g) + Dot(f, Div(g)))
+        else:
+            # GTODO
+            assert False
+
     cell_avg = GenericDerivativeRuleset.independent_operator
     facet_avg = GenericDerivativeRuleset.independent_operator
+
+    def reference_value(self, o):
+        # GTODO: Check this
+        f, = o.ufl_operands
+        if not f._ufl_is_terminal_:
+            error("ReferenceValue can only wrap a terminal")
+        K = JacobianInverse(f.ufl_domain())
+        j, = indices(1)
+        if len(o.ufl_shape) == 1:
+            return Dot(ReferenceGrad(o), K)[j, j]
+        else:
+            ii = indices(len(o.ufl_shape) - 1)
+            return as_tensor(IndexSum(Dot(ReferenceGrad(o), K)[ii + (j, j)]), ii)
 
 
 class CurlRuleset(GenericDerivativeRuleset):
@@ -781,6 +805,10 @@ class CurlRuleset(GenericDerivativeRuleset):
 
     cell_avg = GenericDerivativeRuleset.independent_operator
     facet_avg = GenericDerivativeRuleset.independent_operator
+
+    def reference_value(self, o):
+        # GTODO: Check this
+        return apply_derivatives(apply_algebra_lowering(Curl(o)))
 
 
 class ReferenceGradRuleset(GenericDerivativeRuleset):
