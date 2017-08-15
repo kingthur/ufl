@@ -697,6 +697,10 @@ class DivRuleset(GenericDerivativeRuleset):
     def grad(self, o, a):
         return Div(a)
 
+    def curl(self, o):
+        """Div of curl is zero."""
+        return self.independent_operator(o)
+
     def list_tensor(self, o):
         # If the arguments to a ListTensor are scalar, then the
         # divergence operator cannot pass through the
