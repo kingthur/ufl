@@ -23,7 +23,7 @@ equivalent representations using basic operators."""
 
 from ufl.log import error
 
-from ufl.classes import Product, Grad
+from ufl.classes import Product, Grad, Div
 from ufl.core.multiindex import indices, Index, FixedIndex
 from ufl.tensors import as_tensor, as_matrix, as_vector
 
@@ -92,6 +92,23 @@ class LowerIntractableCompoundAlgebra(MultiFunction):
     def inverse(self, o, A):
         return inverse_expr(A)
 
+    def nabla_div(self, o, a):
+        if o.ufl_shape == ():
+            return Div(a)
+        else:
+            ii = tuple(indices(len(o.ufl_shape)))
+            jj = Index()
+            return Div(as_tensor(a[(jj,) + ii], ii + (jj,)))
+
+    def nabla_grad(self, o, a):
+        sh = a.ufl_shape
+        if sh == ():
+            return Grad(a)
+        else:
+            jj = Index()
+            ii = tuple(indices(len(sh)))
+            return as_tensor(Grad(a)[ii + (jj,)], (jj,) + ii)
+
 
 class LowerAllCompoundAlgebra(LowerIntractableCompoundAlgebra):
     """Expands high level compound operators (e.g. inner) to equivalent
@@ -159,10 +176,12 @@ class LowerAllCompoundAlgebra(LowerIntractableCompoundAlgebra):
         return a[..., i].dx(i)
 
     def nabla_div(self, o, a):
+        # Must overwrite behaviour in LowerIntractableCompoundAlgebra.
         i = Index()
         return a[i, ...].dx(i)
 
     def nabla_grad(self, o, a):
+        # Must overwrite behaviour in LowerIntractableCompoundAlgebra.
         sh = a.ufl_shape
         if sh == ():
             return Grad(a)
