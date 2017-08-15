@@ -80,17 +80,6 @@ class GeometryLoweringApplier(MultiFunction):
         return ReferenceGrad(x)
 
     @memoized_handler
-    def jacobian_transpose(self, o):
-        if self._preserve_types[o._ufl_typecode_]:
-            return o
-        domain = o.ufl_domain()
-        if domain.ufl_coordinate_element().mapping() != "identity":
-            error("Piola mapped coordinates are not implemented.")
-        x = self.spatial_coordinate(SpatialCoordinate(domain))
-        (i, j) = indices(2)
-        return as_tensor(ReferenceGrad(x)[i, j], (j, i))
-
-    @memoized_handler
     def _future_jacobian(self, o):
         # If we're not using Coefficient to represent the spatial
         # coordinate, we can just as well just return o here too
@@ -107,17 +96,6 @@ class GeometryLoweringApplier(MultiFunction):
         J = self.jacobian(Jacobian(domain))
         # TODO: This could in principle use
         # preserve_types[JacobianDeterminant] with minor refactoring:
-        K = inverse_expr(J)
-        return K
-
-    @memoized_handler
-    def jacobian_inverse_transpose(self, o):
-        if self._preserve_types[o._ufl_typecode_]:
-            return o
-        domain = o.ufl_domain()
-        J = self.jacobian(Jacobian(domain))
-        i, j = indices(2)
-        JT = as_tensor(J[i, j], (j, i))
         K = inverse_expr(J)
         return K
 

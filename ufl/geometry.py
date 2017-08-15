@@ -307,21 +307,6 @@ class Jacobian(GeometricCellQuantity):
 
 
 @ufl_type()
-class JacobianTranspose(GeometricCellQuantity):
-    __slots__ = ()
-    name = "JT"
-
-    @property
-    def ufl_shape(self):
-        g = self._domain.geometric_dimension()
-        t = self._domain.topological_dimension()
-        return (t, g)
-
-    def is_cellwise_constant(self):
-        return self._domain.is_piecewise_linear_simplex_domain()
-
-
-@ufl_type()
 class FacetJacobian(GeometricFacetQuantity):
     """UFL geometry representation: The Jacobian of the mapping from reference facet to spatial coordinates.
 
@@ -497,21 +482,6 @@ class JacobianInverse(GeometricCellQuantity):
         "Return whether this expression is spatially constant over each cell."
         # Only true for a piecewise linear coordinate field in simplex
         # cells
-        return self._domain.is_piecewise_linear_simplex_domain()
-
-
-@ufl_type()
-class JacobianInverseTranspose(GeometricCellQuantity):
-    __slots__ = ()
-    name = "KT"
-
-    @property
-    def ufl_shape(self):
-        g = self._domain.geometric_dimension()
-        t = self._domain.topological_dimension()
-        return (g, t)
-
-    def is_cellwise_constant(self):
         return self._domain.is_piecewise_linear_simplex_domain()
 
 
