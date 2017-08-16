@@ -29,7 +29,7 @@ from ufl.log import error
 from ufl.utils.stacks import StackDict
 from ufl.core.expr import Expr
 from ufl.constantvalue import Zero, as_ufl
-from ufl.algebra import Sum, Product, Division, Power, Abs
+from ufl.algebra import Sum, Product, Division, Power, Abs, ScalarTensorProduct
 from ufl.tensoralgebra import Transposed, Inner
 from ufl.core.multiindex import MultiIndex, Index, FixedIndex, IndexBase, indices
 from ufl.indexed import Indexed
@@ -130,21 +130,8 @@ def _mult(a, b):
         ti = ()
 
     elif r1 == 0 or r2 == 0:
-        # Scalar - tensor product
-        if r2 == 0:
-            a, b = b, a
-
-        # Check for zero, simplifying early if possible
-        if isinstance(a, Zero) or isinstance(b, Zero):
-            shape = s1 or s2
-            return Zero(shape, fi, fid)
-
-        # Repeated indices are allowed, like in:
-        # v[i]*M[i,:]
-
-        # Apply product to scalar components
-        ti = indices(len(b.ufl_shape))
-        p = Product(a, b[ti])
+        p = ScalarTensorProduct(a, b)
+        ti = ()
 
     elif r1 == 2 and r2 in (1, 2):  # Matrix-matrix or matrix-vector
         if ri:
