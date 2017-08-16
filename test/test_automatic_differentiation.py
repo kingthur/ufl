@@ -67,8 +67,8 @@ class ExpressionCollection(object):
         self.terminals += self.functions
 
         self.algebra = ([
-            u*2, v*2, w*2,
-            u+2*u, v+2*v, w+2*w,
+            u*2,
+            u+2*u,
             2/u, u/2, v/2, w/2,
             u**3, 3**u,
         ])
@@ -79,7 +79,6 @@ class ExpressionCollection(object):
         ])
         self.variables = ([
             variable(u), variable(v), variable(w),
-            variable(w*u), 3*variable(w*u),
         ])
 
         if d == 1:
@@ -143,6 +142,15 @@ class ExpressionCollection(object):
         self.noncompounds += self.conditionals
         self.noncompounds += self.restrictions
 
+        self.scalartensorproducts = ([
+            v*2, w*2,
+            v+2*v, w+2*w,
+        ])
+
+        self.compoundvariables = ([
+            variable(w*u), 3*variable(w*u),
+        ])
+
         if d == 1:
             self.tensorproducts = []
         else:
@@ -178,6 +186,8 @@ class ExpressionCollection(object):
             ])
 
         self.compounds = []
+        self.compounds += self.scalartensorproducts
+        self.compounds += self.compoundvariables
         self.compounds += self.tensorproducts
         self.compounds += self.tensoralgebra
         self.compounds += self.crossproducts

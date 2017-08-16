@@ -206,7 +206,8 @@ class PartExtracter(Transformer):
 
         return (x, provides)
 
-    # inner, outer and dot all behave as product
+    # scalarTensorProduct, inner, outer and dot all behave as product
+    scalar_tensor_product = product
     inner = product
     outer = product
     dot = product

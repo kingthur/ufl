@@ -214,6 +214,80 @@ class Product(Operator):
 
 
 @ufl_type(num_ops=2,
+          binop="__mul__", rbinop="__rmul__")
+class ScalarTensorProduct(Operator):
+    """The product of a scalar and a tensor."""
+    __slots__ = as_native_strings((
+        "ufl_free_indices",
+        "ufl_index_dimensions",
+    ))
+
+    def __new__(cls, a, b):
+        # Conversion
+        a = as_ufl(a)
+        b = as_ufl(b)
+
+        # Type checking
+        if a.ufl_shape == ():
+            if b.ufl_shape == ():
+                return Product(a, b)
+            else:
+                pass
+        else:
+            if b.ufl_shape == ():
+                b, a = a, b
+            else:
+                error("Both arguments to ScalarTensorProduct are non-scalar:"
+                      "\n\t%s\nand\n\t%s" % (ufl_err_str(a), ufl_err_str(b)))
+
+        # Simplification
+        if isinstance(a, Zero) or isinstance(b, Zero):
+            # Got any zeros? Return zero.
+            fi, fid = merge_unique_indices(a.ufl_free_indices,
+                                           a.ufl_index_dimensions,
+                                           b.ufl_free_indices,
+                                           b.ufl_index_dimensions)
+            return Zero(b.ufl_shape, fi, fid)
+
+        if isinstance(a, ScalarValue) and a._value == 1:
+                return b
+
+        # Construction
+        self = Operator.__new__(cls)
+        self._init(a, b)
+        return self
+
+    def _init(self, a, b):
+        "Constructor, called by __new__ with already checked arguments."
+        self.ufl_operands = (a, b)
+
+        # Extract indices
+        fi, fid = merge_unique_indices(a.ufl_free_indices,
+                                       a.ufl_index_dimensions,
+                                       b.ufl_free_indices,
+                                       b.ufl_index_dimensions)
+        self.ufl_free_indices = fi
+        self.ufl_index_dimensions = fid
+
+    def __init__(self, a, b):
+        Operator.__init__(self)
+
+    @property
+    def ufl_shape(self):
+        return self.ufl_operands[1].ufl_shape
+
+    def evaluate(self, x, mapping, component, index_values):
+        a, b = self.ufl_operands
+        eval_a = a.evaluate(x, mapping, (), index_values)
+        eval_b = b.evaluate(x, mapping, component, index_values)
+        return eval_a * eval_b
+
+    def __str__(self):
+        a, b = self.ufl_operands
+        return " .* ".join((parstr(a, self), parstr(b, self)))
+
+
+@ufl_type(num_ops=2,
           inherit_indices_from_operand=0,
           binop="__div__", rbinop="__rdiv__")
 class Division(Operator):

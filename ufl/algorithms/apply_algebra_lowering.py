@@ -116,6 +116,10 @@ class LowerAllCompoundAlgebra(LowerIntractableCompoundAlgebra):
     def __init__(self):
         LowerIntractableCompoundAlgebra.__init__(self)
 
+    def scalar_tensor_product(self, o, a, b):
+        ti = indices(len(b.ufl_shape))
+        return as_tensor(Product(a, b[ti]), ti)
+
     def altenative_dot(self, o, a, b):  # TODO: Test this
         ash = a.ufl_shape
         bsh = b.ufl_shape
