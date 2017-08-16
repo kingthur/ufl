@@ -215,19 +215,7 @@ class GenericDerivativeRuleset(MultiFunction):
         a, b = o.ufl_operands
         return ScalarTensorProduct(da, b) + ScalarTensorProduct(a, db)
 
-    def scalar_tensor_product(self, o, da, db):
-        a, b = o.ufl_operands
-        # Either both terms become ScalarTensorProducts, or neither
-        # does (but in this case they use the same indices).
-        if (a.ufl_shape == () or db.ufl_shape == ()
-            and da.ufl_shape == () or b.ufl_shape == ()):
-            return ScalarTensorProduct(da, b) + ScalarTensorProduct(a, db)
-        else:
-            (b, da, db), ii = as_scalars(b, da, db)
-            s = Sum(Product(da, b), Product(a, db))
-            if ii:
-                s = as_tensor(s, ii)
-            return s
+    scalar_tensor_product = override
 
     def division(self, o, fp, gp):
         f, g = o.ufl_operands
@@ -472,6 +460,10 @@ class GradRuleset(GenericDerivativeRuleset):
         GenericDerivativeRuleset.__init__(self, var_shape=(geometric_dimension,))
         self._Id = Identity(geometric_dimension)
 
+    def scalar_tensor_product(self, o, da, db):
+        a, b = o.ufl_operands
+        return Sum(Outer(b, da), ScalarTensorProduct(a, db))
+
     # --- Specialized rules for geometric quantities
 
     def geometric_quantity(self, o):
@@ -605,6 +597,11 @@ class DivRuleset(GenericDerivativeRuleset):
         # can't, so instead we override independent_terminal and
         # independent_operator below.
         GenericDerivativeRuleset.__init__(self, var_shape=())
+
+    def scalar_tensor_product(self, o):
+        a, b = o.ufl_operands
+        return apply_derivatives(
+            Sum(Dot(b, grad(f)), ScalarTensorProduct(a, Div(b))))
 
     # --- Overrides of helper functions
 
@@ -968,6 +965,11 @@ class GateauxDerivativeRuleset(GenericDerivativeRuleset):
         # where df/dw is nonzero
         cd = coefficient_derivatives.ufl_operands
         self._cd = {cd[2*i]: cd[2*i+1] for i in range(len(cd)//2)}
+
+    def scalar_tensor_product(self, o, da, db):
+        a, b = o.ufl_operands
+        return Sum(ScalarTensorProduct(da, b),
+                   ScalarTensorProduct(a, db))
 
     # Explicitly defining dg/dw == 0
     geometric_quantity = GenericDerivativeRuleset.independent_terminal
