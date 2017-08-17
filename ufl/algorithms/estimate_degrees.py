@@ -190,6 +190,7 @@ class SumDegreeEstimator(MultiFunction):
     product = _add_degrees
     # Handling these types although they should not occur... please
     # apply preprocessing before using this algorithm:
+    scalar_tensor_product = _add_degrees
     inner = _add_degrees
     dot = _add_degrees
     outer = _add_degrees
