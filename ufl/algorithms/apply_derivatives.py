@@ -35,7 +35,7 @@ from ufl.classes import ExprList, ExprMapping
 from ufl.classes import Product, Sum, IndexSum, ScalarTensorProduct
 from ufl.classes import JacobianInverse
 from ufl.classes import SpatialCoordinate
-from ufl.classes import Dot, Inner
+from ufl.classes import Dot, Inner, Outer
 
 from ufl.constantvalue import is_true_ufl_scalar, is_ufl_scalar
 from ufl.operators import (conditional, sign,
@@ -631,8 +631,8 @@ class DivRuleset(GenericDerivativeRuleset):
     def argument(self, o):
         return Div(o)
 
-    def grad(self, o, a):
-        return Div(a)
+    def grad(self, o):
+        return Div(o)
 
     def curl(self, o):
         """Div of curl is zero."""
