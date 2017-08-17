@@ -210,10 +210,14 @@ class GenericDerivativeRuleset(MultiFunction):
     def product(self, o, da, db):
         # Even though arguments to o are scalar, da and db may be
         # tensor valued
-        # Indexing in the two summands may be different (which it was
-        # not in a prior implementation, which used as_scalars(da, db)).
         a, b = o.ufl_operands
-        return ScalarTensorProduct(da, b) + ScalarTensorProduct(a, db)
+        (da, db), ii = as_scalars(da, db)
+        pa = Product(da, b)
+        pb = Product(a, db)
+        s = Sum(pa, pb)
+        if ii:
+            s = as_tensor(s, ii)
+        return s
 
     scalar_tensor_product = override
 
