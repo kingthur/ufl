@@ -68,7 +68,8 @@ class ArityChecker(MultiFunction):
         else:
             return b
 
-    # inner, outer and dot all behave as product
+    # scalar-tensor product, inner, outer and dot all behave as product
+    scalar_tensor_product = product
     inner = product
     outer = product
     dot = product
