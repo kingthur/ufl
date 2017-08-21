@@ -22,7 +22,7 @@ from ufl.log import error
 from ufl.utils.py23 import as_native_strings
 from ufl.core.expr import ufl_err_str
 from ufl.core.ufl_type import ufl_type
-from ufl.constantvalue import Zero
+from ufl.constantvalue import Zero, Identity
 from ufl.algebra import Operator
 from ufl.precedence import parstr
 from ufl.sorting import sorted_expr
@@ -219,6 +219,10 @@ class Dot(CompoundTensorOperator):
             return Zero(shape, fi, fid)
         elif scalar:  # TODO: Move this to def dot()?
             return a * b
+        elif isinstance(a, Identity):
+            return b
+        elif isinstance(b, Identity):
+            return a
 
         return CompoundTensorOperator.__new__(cls)
 
