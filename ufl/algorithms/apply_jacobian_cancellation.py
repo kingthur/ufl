@@ -109,6 +109,12 @@ class JacobianCancellation(MultiFunction):
     def inner(self, o):
         return (o, None, None, None, None)
 
+    def sum(self, o):
+        return (o, None, None, None, None)
+
+    def product(self, o):
+        return (o, None, None, None, None)
+
 
 def apply_jacobian_cancellation_in_expression(expression):
     """Here, the argument must be an expression."""
