@@ -605,7 +605,7 @@ class DivRuleset(GenericDerivativeRuleset):
     def scalar_tensor_product(self, o):
         a, b = o.ufl_operands
         return apply_derivatives(
-            Sum(Dot(b, grad(f)), ScalarTensorProduct(a, Div(b))))
+            Sum(Dot(b, Grad(a)), ScalarTensorProduct(a, Div(b))))
 
     # --- Overrides of helper functions
 
@@ -681,14 +681,26 @@ class DivRuleset(GenericDerivativeRuleset):
         if f_dim == 1 and g_dim == 2:
             return apply_derivatives(
                 Inner(Grad(f), g) + Dot(f, Div(g)))
+        elif g_dim == 1:
+            ii = indices(f_dim-2) if f_dim > 2 else ()
+            div_index, sum_index = indices(2)
+            first_term = Dot(
+                    as_tensor(
+                        Grad(f)[ii + (div_index, sum_index, div_index)],
+                        ii + (sum_index,)),
+                g)
+            second_term = as_tensor(
+                Dot(f, Grad(g))[ii + (div_index, div_index)],
+                ii)
+            return apply_derivatives(first_term + second_term)
         else:
             # GTODO: Write tests for this case, including the corner cases.
             ii = indices(f_dim-1) if f_dim > 1 else ()
             jj = indices(g_dim-2) if g_dim > 2 else ()
             div_index, sum_index = indices(2)
             first_term = as_tensor(
-                grad(f)[iii+(sum_index,)+(div_index,)] * g[jj + (div_index,)],
-                iii + jj)
+                Grad(f)[ii+(sum_index,)+(div_index,)] * g[jj + (div_index,)],
+                ii + jj)
             second_term = Dot(f, Div(g))
             return apply_derivatives(first_term + second_term)
 
