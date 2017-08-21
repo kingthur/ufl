@@ -31,7 +31,7 @@ from ufl.algorithms.map_integrands import map_integrand_dags
 
 from ufl.classes import (ReferenceValue,
                          Jacobian, JacobianInverse, JacobianDeterminant,
-                         Index)
+                         Index, Dot, ScalarTensorProduct)
 
 from ufl.tensors import as_tensor, as_vector
 from ufl.utils.sequences import product
@@ -115,16 +115,12 @@ def apply_single_function_pullbacks(g):
         return f
     elif mapping == "contravariant Piola":
         assert transform_hdiv.ufl_shape == (gsize, rsize)
-        i, j = indices(2)
-        f = as_vector(transform_hdiv[i, j]*r[j], i)
-        # f = as_tensor(transform_hdiv[i, j]*r[k,j], (k,i)) # FIXME: Handle Vector(Piola) here?
+        f = ScalarTensorProduct(1.0/detJ, Dot(J, r))
         assert f.ufl_shape == g.ufl_shape
         return f
     elif mapping == "covariant Piola":
         assert Jinv.ufl_shape == (rsize, gsize)
-        i, j = indices(2)
-        f = as_vector(Jinv[j, i]*r[j], i)
-        # f = as_tensor(Jinv[j, i]*r[k,j], (k,i)) # FIXME: Handle Vector(Piola) here?
+        f = Dot(r, Jinv)
         assert f.ufl_shape == g.ufl_shape
         return f
     elif mapping == "double covariant Piola":
@@ -185,19 +181,17 @@ def apply_single_function_pullbacks(g):
             assert transform_hdiv.ufl_shape == (gm, rm)
             # Get reference value vector corresponding to this subelement:
             rv = as_vector([r[rpos+k] for k in range(rm)])
-            # Apply transform with IndexSum over j for each row
-            j = Index()
+            gv = ScalarTensorProduct(1.0/detJ, Dot(J, rv))
             for i in range(gm):
-                g_components[gpos + i] = transform_hdiv[i, j]*rv[j]
+                g_components[gpos + i] = gv[i]
 
         elif mp == "covariant Piola":
             assert Jinv.ufl_shape == (rm, gm)
             # Get reference value vector corresponding to this subelement:
             rv = as_vector([r[rpos+k] for k in range(rm)])
-            # Apply transform with IndexSum over j for each row
-            j = Index()
+            gv = Dot(rv, Jinv)
             for i in range(gm):
-                g_components[gpos + i] = Jinv[j, i]*rv[j]
+                g_components[gpos + i] = gv[i]
 
         elif mp == "double covariant Piola":
             # components are flatten, map accordingly

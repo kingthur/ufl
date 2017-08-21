@@ -356,7 +356,7 @@ class TestCombined:
                   ComponentTensor(Indexed(grad(w), MultiIndex((i,)))*dg
                                   + w*Indexed(grad(dg), MultiIndex((i,))),
                                   MultiIndex((i,))))
-        )
+            )
         assert equal_up_to_index_relabelling(actual, expected)
 
     def test_inner_grad(self, context):
@@ -434,4 +434,68 @@ class TestPullbacks():
         expected = inner(dot(ReferenceGrad(ReferenceValue(f)), K),
                          dot(ReferenceGrad(ReferenceValue(g)), K))
         expected = apply_algebra_lowering(expected)
+        assert equal_up_to_index_relabelling(actual, expected)
+
+    def test_div_conforming_identity(self):
+        cell = triangle
+        rt_element = FiniteElement("RT", cell, degree=1)
+        cg_element = FiniteElement("CG", cell, degree=1)
+        element = MixedElement(rt_element, cg_element)
+        q = Coefficient(rt_element)
+        v = Coefficient(cg_element)
+        base_expression = dot(q, grad(v))
+        actual = transform(base_expression)
+        detJ = JacobianDeterminant(q.ufl_domain())
+        expected = apply_algebra_lowering(
+            dot((1.0/detJ) * ReferenceValue(q),
+                ReferenceGrad(ReferenceValue(v))))
+        assert equal_up_to_index_relabelling(actual, expected)
+
+    def test_div_conforming_identity_reversed(self):
+        # Identical to test_div_conforming_identity except for the
+        # order of the operands to the dot product.
+        cell = triangle
+        rt_element = FiniteElement("RT", cell, degree=1)
+        cg_element = FiniteElement("CG", cell, degree=1)
+        element = MixedElement(rt_element, cg_element)
+        q = Coefficient(rt_element)
+        v = Coefficient(cg_element)
+        base_expression = dot(grad(v), q)
+        actual = transform(base_expression)
+        detJ = JacobianDeterminant(q.ufl_domain())
+        expected = apply_algebra_lowering(
+            dot((1.0/detJ) * ReferenceValue(q),
+                ReferenceGrad(ReferenceValue(v))))
+        assert equal_up_to_index_relabelling(actual, expected)
+
+    def test_curl_conforming_identity(self):
+        cell = triangle
+        rt_element = FiniteElement("RT", cell, degree=1)
+        n_element = FiniteElement("N1curl", cell, degree=1)
+        element = MixedElement(rt_element, n_element)
+        q = Coefficient(rt_element)
+        chi = Coefficient(n_element)
+        base_expression = dot(q, chi)
+        actual = transform(base_expression)
+        detJ = JacobianDeterminant(q.ufl_domain())
+        expected = apply_algebra_lowering(
+            dot((1.0/detJ) * ReferenceValue(q),
+                ReferenceValue(chi)))
+        assert equal_up_to_index_relabelling(actual, expected)
+
+    def test_curl_conforming_identity_reversed(self):
+        # Identical to test_curl_conforming_identity except for the
+        # order of the operands to the dot product.
+        cell = triangle
+        rt_element = FiniteElement("RT", cell, degree=1)
+        n_element = FiniteElement("N1curl", cell, degree=1)
+        element = MixedElement(rt_element, n_element)
+        q = Coefficient(rt_element)
+        chi = Coefficient(n_element)
+        base_expression = dot(chi, q)
+        actual = transform(base_expression)
+        detJ = JacobianDeterminant(q.ufl_domain())
+        expected = apply_algebra_lowering(
+            dot((1.0/detJ) * ReferenceValue(q),
+                ReferenceValue(chi)))
         assert equal_up_to_index_relabelling(actual, expected)

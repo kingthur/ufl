@@ -7,7 +7,7 @@ from pytest import raises
 from ufl import *
 from ufl.algorithms.apply_function_pullbacks import apply_function_pullbacks, apply_single_function_pullbacks
 from ufl.algorithms.renumbering import renumber_indices
-from ufl.classes import Jacobian, JacobianInverse, JacobianDeterminant, ReferenceValue, CellOrientation
+from ufl.classes import Jacobian, JacobianInverse, JacobianDeterminant, ReferenceValue, CellOrientation, ScalarTensorProduct
 
 
 def check_single_function_pullback(g, mappings):
@@ -105,16 +105,15 @@ def test_apply_single_function_pullbacks_triangle3d():
     # o = CellOrientation(domain)
     i, j, k, l = indices(4)
 
-    # Contravariant H(div) Piola mapping:
-    M_hdiv = ((1.0/detJ) * J)  # Not applying cell orientation here
+    # Contravariant H(div) Piola mapping: 1.0/detJ * J
     # Covariant H(curl) Piola mapping: Jinv.T
 
     mappings = {
         # Simple elements should get a simple representation
         u: ru,
         v: rv,
-        vd: as_vector(M_hdiv[i, j]*rvd[j], i),
-        vc: as_vector(Jinv[j, i]*rvc[j], i),
+        vd: ScalarTensorProduct(1.0/detJ, dot(J, rvd)),
+        vc: dot(rvc, Jinv),
         t: rt,
         s: as_tensor([[rs[0], rs[1], rs[2]],
                       [rs[1], rs[3], rs[4]],
@@ -128,25 +127,25 @@ def test_apply_single_function_pullbacks_triangle3d():
             rvdm[1],
             rvdm[2],
             # Vd
-            M_hdiv[0, j]*as_vector([rvdm[3], rvdm[4]])[j],
-            M_hdiv[1, j]*as_vector([rvdm[3], rvdm[4]])[j],
-            M_hdiv[2, j]*as_vector([rvdm[3], rvdm[4]])[j],
+            ScalarTensorProduct(1.0/detJ, dot(J, as_vector([rvdm[3], rvdm[4]])))[0],
+            ScalarTensorProduct(1.0/detJ, dot(J, as_vector([rvdm[3], rvdm[4]])))[1],
+            ScalarTensorProduct(1.0/detJ, dot(J, as_vector([rvdm[3], rvdm[4]])))[2],
     ]),
         vcm: as_vector([
             # Vd
-            M_hdiv[0, j]*as_vector([rvcm[0], rvcm[1]])[j],
-            M_hdiv[1, j]*as_vector([rvcm[0], rvcm[1]])[j],
-            M_hdiv[2, j]*as_vector([rvcm[0], rvcm[1]])[j],
+            ScalarTensorProduct(1.0/detJ, dot(J, as_vector([rvcm[0], rvcm[1]])))[0],
+            ScalarTensorProduct(1.0/detJ, dot(J, as_vector([rvcm[0], rvcm[1]])))[1],
+            ScalarTensorProduct(1.0/detJ, dot(J, as_vector([rvcm[0], rvcm[1]])))[2],
             # Vc
-            Jinv[i, 0]*as_vector([rvcm[2], rvcm[3]])[i],
-            Jinv[i, 1]*as_vector([rvcm[2], rvcm[3]])[i],
-            Jinv[i, 2]*as_vector([rvcm[2], rvcm[3]])[i],
+            dot(as_vector([rvcm[2], rvcm[3]]), Jinv)[0],
+            dot(as_vector([rvcm[2], rvcm[3]]), Jinv)[1],
+            dot(as_vector([rvcm[2], rvcm[3]]), Jinv)[2],
     ]),
         tm: as_vector([
             # Vc
-            Jinv[i, 0]*as_vector([rtm[0], rtm[1]])[i],
-            Jinv[i, 1]*as_vector([rtm[0], rtm[1]])[i],
-            Jinv[i, 2]*as_vector([rtm[0], rtm[1]])[i],
+            dot(as_vector([rtm[0], rtm[1]]), Jinv)[0],
+            dot(as_vector([rtm[0], rtm[1]]), Jinv)[1],
+            dot(as_vector([rtm[0], rtm[1]]), Jinv)[2],
             # T
             rtm[2], rtm[3], rtm[4],
             rtm[5], rtm[6], rtm[7],
@@ -164,9 +163,9 @@ def test_apply_single_function_pullbacks_triangle3d():
     ]),
         # Case from failing ffc demo:
         vd0m: as_vector([
-            M_hdiv[0, j]*as_vector([rvd0m[0], rvd0m[1]])[j],
-            M_hdiv[1, j]*as_vector([rvd0m[0], rvd0m[1]])[j],
-            M_hdiv[2, j]*as_vector([rvd0m[0], rvd0m[1]])[j],
+            ScalarTensorProduct(1.0/detJ, J)[0, j]*as_vector([rvd0m[0], rvd0m[1]])[j],
+            ScalarTensorProduct(1.0/detJ, J)[1, j]*as_vector([rvd0m[0], rvd0m[1]])[j],
+            ScalarTensorProduct(1.0/detJ, J)[2, j]*as_vector([rvd0m[0], rvd0m[1]])[j],
             rvd0m[2]
     ]),
         # This combines it all:
@@ -180,13 +179,13 @@ def test_apply_single_function_pullbacks_triangle3d():
             rw[9], rw[10], rw[11],
             rw[12], rw[13], rw[14],
             # Vc
-            Jinv[i, 0]*as_vector([rw[15], rw[16]])[i],
-            Jinv[i, 1]*as_vector([rw[15], rw[16]])[i],
-            Jinv[i, 2]*as_vector([rw[15], rw[16]])[i],
+            dot(as_vector([rw[15], rw[16]]), Jinv)[0],
+            dot(as_vector([rw[15], rw[16]]), Jinv)[1],
+            dot(as_vector([rw[15], rw[16]]), Jinv)[2],
             # Vd
-            M_hdiv[0, j]*as_vector([rw[17], rw[18]])[j],
-            M_hdiv[1, j]*as_vector([rw[17], rw[18]])[j],
-            M_hdiv[2, j]*as_vector([rw[17], rw[18]])[j],
+            ScalarTensorProduct(1.0/detJ, dot(J, as_vector([rw[17], rw[18]])))[0],
+            ScalarTensorProduct(1.0/detJ, dot(J, as_vector([rw[17], rw[18]])))[1],
+            ScalarTensorProduct(1.0/detJ, dot(J, as_vector([rw[17], rw[18]])))[2],
             # V
             rw[19],
             rw[20],
@@ -279,16 +278,15 @@ def test_apply_single_function_pullbacks_triangle():
     Jinv = JacobianInverse(domain)
     i, j, k, l = indices(4)
 
-    # Contravariant H(div) Piola mapping:
-    M_hdiv = (1.0/detJ) * J
+    # Contravariant H(div) Piola mapping: 1.0/detJ * J
     # Covariant H(curl) Piola mapping: Jinv.T
 
     mappings = {
         # Simple elements should get a simple representation
         u: ru,
         v: rv,
-        vd: as_vector(M_hdiv[i, j]*rvd[j], i),
-        vc: as_vector(Jinv[j, i]*rvc[j], i),
+        vd: ScalarTensorProduct(1.0/detJ, dot(J, rvd)),
+        vc: dot(rvc, Jinv),
         t: rt,
         s: as_tensor([[rs[0], rs[1]], [rs[1], rs[2]]]),
         # Mixed elements become a bit more complicated
@@ -299,21 +297,21 @@ def test_apply_single_function_pullbacks_triangle():
             rvdm[0],
             rvdm[1],
             # Vd
-            M_hdiv[0, j]*as_vector([rvdm[2], rvdm[3]])[j],
-            M_hdiv[1, j]*as_vector([rvdm[2], rvdm[3]])[j],
+            ScalarTensorProduct(1.0/detJ, dot(J, as_vector([rvdm[2], rvdm[3]])))[0],
+            ScalarTensorProduct(1.0/detJ, dot(J, as_vector([rvdm[2], rvdm[3]])))[1],
     ]),
         vcm: as_vector([
             # Vd
-            M_hdiv[0, j]*as_vector([rvcm[0], rvcm[1]])[j],
-            M_hdiv[1, j]*as_vector([rvcm[0], rvcm[1]])[j],
+            ScalarTensorProduct(1.0/detJ, dot(J, as_vector([rvcm[0], rvcm[1]])))[0],
+            ScalarTensorProduct(1.0/detJ, dot(J, as_vector([rvcm[0], rvcm[1]])))[1],
             # Vc
-            Jinv[i, 0]*as_vector([rvcm[2], rvcm[3]])[i],
-            Jinv[i, 1]*as_vector([rvcm[2], rvcm[3]])[i],
+            dot(as_vector([rvcm[2], rvcm[3]]), Jinv)[0],
+            dot(as_vector([rvcm[2], rvcm[3]]), Jinv)[1],
     ]),
         tm: as_vector([
             # Vc
-            Jinv[i, 0]*as_vector([rtm[0], rtm[1]])[i],
-            Jinv[i, 1]*as_vector([rtm[0], rtm[1]])[i],
+            dot(as_vector([rtm[0], rtm[1]]), Jinv)[0],
+            dot(as_vector([rtm[0], rtm[1]]), Jinv)[1],
             # T
             rtm[2], rtm[3],
             rtm[4], rtm[5],
@@ -335,11 +333,11 @@ def test_apply_single_function_pullbacks_triangle():
             rw[3], rw[4],
             rw[5], rw[6],
             # Vc
-            Jinv[i, 0]*as_vector([rw[7], rw[8]])[i],
-            Jinv[i, 1]*as_vector([rw[7], rw[8]])[i],
+            dot(as_vector([rw[7], rw[8]]), Jinv)[0],
+            dot(as_vector([rw[7], rw[8]]), Jinv)[1],
             # Vd
-            M_hdiv[0, j]*as_vector([rw[9], rw[10]])[j],
-            M_hdiv[1, j]*as_vector([rw[9], rw[10]])[j],
+            ScalarTensorProduct(1.0/detJ, dot(J, as_vector([rw[9], rw[10]])))[0],
+            ScalarTensorProduct(1.0/detJ, dot(J, as_vector([rw[9], rw[10]])))[1],
             # V
             rw[11],
             rw[12],
