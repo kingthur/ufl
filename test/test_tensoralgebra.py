@@ -88,6 +88,10 @@ def test_dot(self, A, B, u, v):
                     for j in dims] for i in dims])
     self.assertEqualValues(C, D)
 
+    D = dot(A, Identity(2))
+    assert D == A
+    D = dot(Identity(2), B)
+    assert D == B
 
 def test_cross(self):
     u = as_vector([3, 3, 3])
