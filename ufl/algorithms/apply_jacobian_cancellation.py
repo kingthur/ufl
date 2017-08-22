@@ -109,8 +109,14 @@ class JacobianCancellation(MultiFunction):
     def inner(self, o):
         return (o, None, None, None, None)
 
-    def sum(self, o):
-        return (o, None, None, None, None)
+    def sum(self, o, left_tuple, right_tuple):
+        left, leftSansJLeft, leftSansJRight, leftSansKLeft, leftSansKRight = left_tuple
+        right, rightSansJLeft, rightSansJRight, rightSansKLeft, rightSansKRight = right_tuple
+        return (left + right,
+                leftSansJLeft + rightSansJLeft if leftSansJLeft and rightSansJLeft else None,
+                leftSansJRight + rightSansJRight if leftSansJRight and rightSansJRight else None,
+                leftSansKLeft + rightSansKLeft if leftSansKLeft and rightSansKLeft else None,
+                leftSansKRight + rightSansKRight if leftSansKRight and rightSansKRight else None)
 
     def product(self, o):
         return (o, None, None, None, None)

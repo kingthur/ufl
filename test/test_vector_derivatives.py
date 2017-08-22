@@ -499,3 +499,60 @@ class TestPullbacks():
             dot((1.0/detJ) * ReferenceValue(q),
                 ReferenceValue(chi)))
         assert equal_up_to_index_relabelling(actual, expected)
+
+    def test_sum_as_cutoff_type_1(self):
+        cell = triangle
+        rt_element = FiniteElement("RT", cell, degree=1)
+        cg_element = FiniteElement("CG", cell, degree=1)
+        element = MixedElement(rt_element, cg_element)
+        q1 = Coefficient(rt_element)
+        q2 = Coefficient(rt_element)
+        v1 = Coefficient(cg_element)
+        v2 = Coefficient(cg_element)
+        base_expression = dot(q1, grad(v1)) + dot(grad(v2), q2)
+        actual = transform(base_expression)
+        detJ = JacobianDeterminant(q1.ufl_domain())
+        expected = apply_algebra_lowering(
+            dot((1.0/detJ) * ReferenceValue(q1),
+                ReferenceGrad(ReferenceValue(v1)))
+            + dot((1.0/detJ) * ReferenceValue(q2),
+                ReferenceGrad(ReferenceValue(v2))))
+        assert equal_up_to_index_relabelling(actual, expected)
+
+    def test_sum_as_cutoff_type_2(self):
+        cell = triangle
+        rt_element = FiniteElement("RT", cell, degree=1)
+        cg_element = FiniteElement("CG", cell, degree=1)
+        element = MixedElement(rt_element, cg_element)
+        q1 = Coefficient(rt_element)
+        q2 = Coefficient(rt_element)
+        v1 = Coefficient(cg_element)
+        v2 = Coefficient(cg_element)
+        base_expression = dot(q1 + q2, grad(v1) + grad(v2))
+        actual = transform(base_expression)
+        detJ = JacobianDeterminant(q1.ufl_domain())
+        expected = apply_algebra_lowering(
+            dot((1.0/detJ) * ReferenceValue(q1)
+                + (1.0/detJ) * ReferenceValue(q2),
+                ReferenceGrad(ReferenceValue(v1))
+                + ReferenceGrad(ReferenceValue(v2))))
+        assert equal_up_to_index_relabelling(actual, expected)
+
+    def test_sum_as_cutoff_type_3(self):
+        cell = triangle
+        rt_element = FiniteElement("RT", cell, degree=1)
+        cg_element = FiniteElement("CG", cell, degree=1)
+        element = MixedElement(rt_element, cg_element)
+        q1 = Coefficient(rt_element)
+        q2 = Coefficient(rt_element)
+        v1 = Coefficient(cg_element)
+        v2 = Coefficient(cg_element)
+        base_expression = dot(grad(v1) + grad(v2), q1 + q2)
+        actual = transform(base_expression)
+        detJ = JacobianDeterminant(q1.ufl_domain())
+        expected = apply_algebra_lowering(
+            dot((1.0/detJ) * ReferenceValue(q1)
+                + (1.0/detJ) * ReferenceValue(q2),
+                ReferenceGrad(ReferenceValue(v1))
+                + ReferenceGrad(ReferenceValue(v2))))
+        assert equal_up_to_index_relabelling(actual, expected)
