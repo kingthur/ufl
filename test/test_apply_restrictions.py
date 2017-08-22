@@ -41,6 +41,6 @@ def test_apply_restrictions():
 
     # n on a linear mesh is opposite pointing from the other side
     assert apply_restrictions(n('+')) == n('+')
-    assert renumber_indices(apply_restrictions(n('-'))) == renumber_indices(-1 * n('+'))
+    assert renumber_indices(apply_restrictions(n('-'))) == renumber_indices(as_tensor(-1*n('+')[i], i))
     # This would be nicer, but -f is translated to -1*f which is translated to as_tensor(-1*f[i], i).
     # assert apply_restrictions(n('-')) == -n('+')
