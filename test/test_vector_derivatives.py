@@ -440,7 +440,6 @@ class TestPullbacks():
         cell = triangle
         rt_element = FiniteElement("RT", cell, degree=1)
         cg_element = FiniteElement("CG", cell, degree=1)
-        element = MixedElement(rt_element, cg_element)
         q = Coefficient(rt_element)
         v = Coefficient(cg_element)
         base_expression = dot(q, grad(v))
@@ -457,7 +456,6 @@ class TestPullbacks():
         cell = triangle
         rt_element = FiniteElement("RT", cell, degree=1)
         cg_element = FiniteElement("CG", cell, degree=1)
-        element = MixedElement(rt_element, cg_element)
         q = Coefficient(rt_element)
         v = Coefficient(cg_element)
         base_expression = dot(grad(v), q)
@@ -472,7 +470,6 @@ class TestPullbacks():
         cell = triangle
         rt_element = FiniteElement("RT", cell, degree=1)
         n_element = FiniteElement("N1curl", cell, degree=1)
-        element = MixedElement(rt_element, n_element)
         q = Coefficient(rt_element)
         chi = Coefficient(n_element)
         base_expression = dot(q, chi)
@@ -489,7 +486,6 @@ class TestPullbacks():
         cell = triangle
         rt_element = FiniteElement("RT", cell, degree=1)
         n_element = FiniteElement("N1curl", cell, degree=1)
-        element = MixedElement(rt_element, n_element)
         q = Coefficient(rt_element)
         chi = Coefficient(n_element)
         base_expression = dot(chi, q)
@@ -504,7 +500,6 @@ class TestPullbacks():
         cell = triangle
         rt_element = FiniteElement("RT", cell, degree=1)
         cg_element = FiniteElement("CG", cell, degree=1)
-        element = MixedElement(rt_element, cg_element)
         q1 = Coefficient(rt_element)
         q2 = Coefficient(rt_element)
         v1 = Coefficient(cg_element)
@@ -523,7 +518,6 @@ class TestPullbacks():
         cell = triangle
         rt_element = FiniteElement("RT", cell, degree=1)
         cg_element = FiniteElement("CG", cell, degree=1)
-        element = MixedElement(rt_element, cg_element)
         q1 = Coefficient(rt_element)
         q2 = Coefficient(rt_element)
         v1 = Coefficient(cg_element)
@@ -542,7 +536,6 @@ class TestPullbacks():
         cell = triangle
         rt_element = FiniteElement("RT", cell, degree=1)
         cg_element = FiniteElement("CG", cell, degree=1)
-        element = MixedElement(rt_element, cg_element)
         q1 = Coefficient(rt_element)
         q2 = Coefficient(rt_element)
         v1 = Coefficient(cg_element)
@@ -555,4 +548,23 @@ class TestPullbacks():
                 + (1.0/detJ) * ReferenceValue(q2),
                 ReferenceGrad(ReferenceValue(v1))
                 + ReferenceGrad(ReferenceValue(v2))))
+        assert equal_up_to_index_relabelling(actual, expected)
+
+    @pytest.mark.xfail
+    def test_div_conforming_identity_with_split(self):
+        cell = triangle
+        rt_element = FiniteElement("RT", cell, degree=1)
+        cg_element = FiniteElement("CG", cell, degree=1)
+        element = MixedElement(rt_element, cg_element)
+        coeff = Coefficient(element)
+        q, v = split(coeff)
+        base_expression = dot(q, grad(v))
+        actual = transform(base_expression)
+        detJ = JacobianDeterminant(q.ufl_domain())
+        ref_q = as_tensor([ReferenceValue(coeff)[0],
+                           ReferenceValue(coeff)[1]])
+        ref_v = ReferenceValue(coeff)[2]
+        expected = apply_algebra_lowering(
+            dot((1.0/detJ) * ref_q,
+                ReferenceGrad(ref_v)))
         assert equal_up_to_index_relabelling(actual, expected)

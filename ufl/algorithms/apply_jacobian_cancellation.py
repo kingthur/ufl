@@ -28,9 +28,12 @@ from ufl.core.terminal import Terminal
 from ufl.corealg.map_dag import map_expr_dag
 from ufl.corealg.multifunction import MultiFunction
 from ufl.differentiation import ReferenceGrad
+from ufl.indexed import Indexed
+from ufl.indexsum import IndexSum
 from ufl.log import error
 from ufl.referencevalue import ReferenceValue
 from ufl.tensoralgebra import Dot
+from ufl.tensors import ComponentTensor, ListTensor
 
 
 class JacobianCancellation(MultiFunction):
@@ -120,6 +123,28 @@ class JacobianCancellation(MultiFunction):
 
     def product(self, o):
         return (o, None, None, None, None)
+
+    def list_tensor(self, o, *op_tuples):
+        return (ListTensor(*[op for (op, _, _, _, _) in op_tuples]),
+                None, None, None, None)
+
+    def component_tensor(self, o, expression_tuple, multiindex_tuple):
+        expression, _, _, _, _ = expression_tuple
+        multiindex, _, _, _, _ = multiindex_tuple
+        return (ComponentTensor(expression, multiindex),
+                None, None, None, None)
+
+    def indexed(self, o, expression_tuple, multiindex_tuple):
+        expression, _, _, _, _ = expression_tuple
+        multiindex, _, _, _, _ = multiindex_tuple
+        return (Indexed(expression, multiindex),
+                None, None, None, None)
+
+    def index_sum(self, o, expression_tuple, multiindex_tuple):
+        expression, _, _, _, _ = expression_tuple
+        multiindex, _, _, _, _ = multiindex_tuple
+        return (IndexSum(expression, multiindex),
+                None, None, None, None)
 
 
 def apply_jacobian_cancellation_in_expression(expression):
