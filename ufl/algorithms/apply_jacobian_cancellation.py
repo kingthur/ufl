@@ -124,6 +124,10 @@ class JacobianCancellation(MultiFunction):
     def product(self, o):
         return (o, None, None, None, None)
 
+    def power(self, o, base_tuple, exponent_tuple):
+        return (base_tuple[0]**exponent_tuple[0],
+                None, None, None, None)
+
     def list_tensor(self, o, *op_tuples):
         return (ListTensor(*[op for (op, _, _, _, _) in op_tuples]),
                 None, None, None, None)
@@ -144,6 +148,10 @@ class JacobianCancellation(MultiFunction):
         expression, _, _, _, _ = expression_tuple
         multiindex, _, _, _, _ = multiindex_tuple
         return (IndexSum(expression, multiindex),
+                None, None, None, None)
+
+    def restricted(self, o, operand_tuple):
+        return (operand_tuple[0](o._side),
                 None, None, None, None)
 
 
