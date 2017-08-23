@@ -214,7 +214,7 @@ class Product(Operator):
 
 
 @ufl_type(num_ops=2,
-          binop="__mul__", rbinop="__rmul__")
+          inherit_shape_from_operand=1)
 class ScalarTensorProduct(Operator):
     """The product of a scalar and a tensor."""
     __slots__ = as_native_strings((
@@ -271,10 +271,6 @@ class ScalarTensorProduct(Operator):
 
     def __init__(self, a, b):
         Operator.__init__(self)
-
-    @property
-    def ufl_shape(self):
-        return self.ufl_operands[1].ufl_shape
 
     def evaluate(self, x, mapping, component, index_values):
         a, b = self.ufl_operands
