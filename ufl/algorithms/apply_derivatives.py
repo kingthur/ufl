@@ -1095,20 +1095,10 @@ class GateauxDerivativeRuleset(GenericDerivativeRuleset):
         #     Then the gradient must be applied to terms such as w*df.
         return apply_derivatives(Grad(op))
 
-    def nabla_grad(self, o, op):
-        if is_cellwise_constant(op):
-            return self.independent_operator(o)
-        return apply_derivatives(NablaGrad(op))
-
     def div(self, o, op):
         if is_cellwise_constant(op):
             return self.independent_operator(o)
         return apply_derivatives(Div(op))
-
-    def nabla_div(self, o, op):
-        if is_cellwise_constant(op):
-            return self.independent_operator(o)
-        return apply_derivatives(NablaDiv(op))
 
     def curl(self, o, op):
         if is_cellwise_constant(op):
