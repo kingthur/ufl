@@ -8,6 +8,7 @@ from ufl.algorithms.apply_algebra_lowering import apply_algebra_lowering
 from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.algorithms.compute_form_data import compute_form_data
 from ufl.algorithms.expand_indices import expand_indices
+from ufl.constantvalue import Zero
 from ufl.core.multiindex import MultiIndex, FixedIndex
 from ufl.core.operator import Operator
 from ufl.corealg.traversal import post_traversal
@@ -382,6 +383,18 @@ class TestCombined:
         fd = compute_form_data(form)
         pf = fd.preprocessed_form
         a = expand_indices(pf) # This test exists to ensure that this call does not cause an exception.
+
+    def test_component_derivative_simple(self):
+        cell = triangle
+        vector_element = VectorElement("CG", cell, 1, dim=3)
+        scalar_element = FiniteElement("CG", cell, 1)
+        u = Coefficient(vector_element)
+        w = Argument(scalar_element, 0)
+        base_expression = derivative(grad(u), u[0], w)
+        actual = apply_derivatives(base_expression)
+        zero_2d = Zero((2,), (), ())
+        expected = as_tensor([grad(w), zero_2d, zero_2d])
+        assert equal_up_to_index_relabelling(actual, expected)
 
     def test_derivative_wrt_tuple(self):
         cell = triangle
