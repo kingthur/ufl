@@ -23,7 +23,7 @@ equivalent representations using basic operators."""
 
 from ufl.log import error
 
-from ufl.classes import Product, Grad, Div
+from ufl.classes import Product, Grad, Div, ReferenceGrad
 from ufl.core.multiindex import indices, Index, FixedIndex
 from ufl.tensors import as_tensor, as_matrix, as_vector
 
@@ -208,6 +208,13 @@ class LowerAllCompoundAlgebra(LowerIntractableCompoundAlgebra):
         if sh == (3,):
             return as_vector((c(1, 2), c(2, 0), c(0, 1)))
         error("Invalid shape %s of curl argument." % (sh,))
+
+    # ------------ Reference-space differential operators
+
+    def reference_div(self, o, arg):
+        i = Index()
+        ref_grad = ReferenceGrad(arg)
+        return ref_grad[..., i, i] # Implicit summation
 
 
 def apply_algebra_lowering(expr):

@@ -3,16 +3,16 @@
 # applied first.
 
 from ufl import *
-from ufl.algebra import Product, Sum
+from ufl.algebra import Product, Sum, Division
 from ufl.algorithms.apply_algebra_lowering import apply_algebra_lowering
 from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.algorithms.compute_form_data import compute_form_data
 from ufl.algorithms.expand_indices import expand_indices
-from ufl.constantvalue import Zero
+from ufl.constantvalue import FloatValue, Zero
 from ufl.core.multiindex import MultiIndex, FixedIndex
 from ufl.core.operator import Operator
 from ufl.corealg.traversal import post_traversal
-from ufl.differentiation import ReferenceGrad
+from ufl.differentiation import ReferenceGrad, ReferenceDiv
 from ufl.indexed import Indexed
 from ufl.indexsum import IndexSum
 from ufl.referencevalue import ReferenceValue
@@ -151,6 +151,10 @@ def context():
             return self.return_values(element)
         def tensor(self, dim1, dim2, cell=triangle):
             element = TensorElement("Lagrange", cell, degree=1, shape=(dim1,dim2))
+            return self.return_values(element)
+        def rt(self):
+            cell = tetrahedron
+            element = FiniteElement("RT", cell, degree=1)
             return self.return_values(element)
     return Context()
 
@@ -422,6 +426,44 @@ class TestCombined:
         assert expr.ufl_shape == (2, 3, 3)
         expr = apply_derivatives(expr)
         assert expr.ufl_shape == (2, 3, 3)
+
+class TestCancellations:
+    def compute_form_data_with_pullbacks(self, expr):
+        integral = expr * dx
+        form_data = compute_form_data(
+            integral,
+            do_apply_function_pullbacks=True)
+        return form_data.preprocessed_form._integrals[0].integrand()
+
+    def test_div_div_nonconforming(self, context):
+        f, g, w, element = context.vector(dim=3, cell=tetrahedron)
+        base_expression = div(f)
+        actual = self.compute_form_data_with_pullbacks(base_expression)
+        expected = IndexSum(
+            Indexed(ComponentTensor(
+                IndexSum(Product(
+                    Indexed(
+                        JacobianInverse(f.ufl_domain()),
+                        MultiIndex((Index(43), Index(42)))),
+                    Indexed(ReferenceGrad(ReferenceValue(f)),
+                            MultiIndex((Index(41), Index(43))))),
+                         MultiIndex((Index(43),))),
+                MultiIndex((Index(41), Index(42)))),
+                    MultiIndex((Index(40), Index(40)))),
+            MultiIndex((Index(40),)))
+        assert equal_up_to_index_relabelling(actual, expected)
+
+    def test_div_div_conforming(self, context):
+        f, g, w, element = context.rt()
+        base_expression = div(f)
+        actual = self.compute_form_data_with_pullbacks(base_expression)
+        mesh = f.ufl_domain()
+        expected = apply_algebra_lowering((1.0)/JacobianDeterminant(mesh) * ReferenceDiv(ReferenceValue(f)))
+        explicit_expected = Product(Division(FloatValue(1.0), JacobianDeterminant(mesh)),
+                                    IndexSum(Indexed(ReferenceGrad(ReferenceValue(f)), MultiIndex((Index(13), Index(13)))),
+                                             MultiIndex((Index(13),))))
+        assert equal_up_to_index_relabelling(actual, expected)
+        assert equal_up_to_index_relabelling(actual, explicit_expected)
 
 
 def transform(expr):

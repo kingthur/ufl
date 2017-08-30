@@ -29,9 +29,13 @@ from ufl.core.multiindex import indices
 from ufl.corealg.multifunction import MultiFunction, memoized_handler
 from ufl.algorithms.map_integrands import map_integrand_dags
 
-from ufl.classes import (ReferenceValue,
-                         Jacobian, JacobianInverse, JacobianDeterminant,
-                         Index, Dot, ScalarTensorProduct)
+from ufl.algebra import ScalarTensorProduct
+from ufl.core.multiindex import Index
+from ufl.core.terminal import FormArgument
+from ufl.differentiation import Div, ReferenceDiv
+from ufl.geometry import Jacobian, JacobianInverse, JacobianDeterminant
+from ufl.referencevalue import ReferenceValue
+from ufl.tensoralgebra import Dot
 
 from ufl.tensors import as_tensor, as_vector
 from ufl.utils.sequences import product
@@ -241,6 +245,15 @@ class FunctionPullbackApplier(MultiFunction):
 
     def terminal(self, t):
         return t
+
+    def div(self, o, pulled_back_arg):
+        arg, = o.ufl_operands
+        if (isinstance(arg, FormArgument)
+            and arg.ufl_element().mapping() == "contravariant Piola"):
+            detJ = JacobianDeterminant(arg.ufl_domain())
+            return (1.0 / detJ) * ReferenceDiv(ReferenceValue(arg))
+        else:
+            return Div(pulled_back_arg)
 
     @memoized_handler
     def form_argument(self, o):

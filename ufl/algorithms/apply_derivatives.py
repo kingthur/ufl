@@ -36,6 +36,7 @@ from ufl.classes import Product, Sum, IndexSum, ScalarTensorProduct
 from ufl.classes import JacobianInverse
 from ufl.classes import SpatialCoordinate
 from ufl.classes import Dot, Inner, Outer
+from ufl.differentiation import ReferenceDiv
 
 from ufl.constantvalue import is_true_ufl_scalar, is_ufl_scalar
 from ufl.operators import (conditional, sign,
@@ -848,6 +849,24 @@ class ReferenceGradRuleset(GenericDerivativeRuleset):
     facet_avg = GenericDerivativeRuleset.independent_operator
 
 
+class ReferenceDivRuleset(GenericDerivativeRuleset):
+    def __init__(self, topological_dimension):
+        GenericDerivativeRuleset.__init__(self,
+                                          var_shape=(topological_dimension,))
+        self._topological_dimension = topological_dimension
+
+    def reference_value(self, o):
+        if not o.ufl_operands[0]._ufl_is_terminal_:
+            error("ReferenceValue can only wrap a terminal")
+        return ReferenceDiv(o)
+
+    def coefficient(self, o):
+        error("Coefficient should be wrapped in ReferenceValue by now")
+
+    def argument(self, o):
+        error("Argument should be wrapped in ReferenceValue by now")
+
+
 class VariableRuleset(GenericDerivativeRuleset):
     def __init__(self, var):
         GenericDerivativeRuleset.__init__(self, var_shape=var.ufl_shape)
@@ -1140,6 +1159,10 @@ class DerivativeRuleDispatcher(MultiFunction):
 
     def reference_grad(self, o, f):
         rules = ReferenceGradRuleset(o.ufl_shape[-1])  # FIXME: Look over this and test better.
+        return map_expr_dag(rules, f)
+
+    def reference_div(self, o, f):
+        rules = ReferenceDivRuleset(f.ufl_shape[-1])
         return map_expr_dag(rules, f)
 
     def variable_derivative(self, o, f, dummy_v):
