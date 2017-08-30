@@ -32,7 +32,7 @@ from ufl.algorithms.map_integrands import map_integrand_dags
 from ufl.algebra import ScalarTensorProduct
 from ufl.core.multiindex import Index
 from ufl.core.terminal import FormArgument
-from ufl.differentiation import Div, ReferenceDiv
+from ufl.differentiation import Div, ReferenceDiv, Curl, ReferenceCurl
 from ufl.geometry import Jacobian, JacobianInverse, JacobianDeterminant
 from ufl.referencevalue import ReferenceValue
 from ufl.tensoralgebra import Dot
@@ -254,6 +254,19 @@ class FunctionPullbackApplier(MultiFunction):
             return (1.0 / detJ) * ReferenceDiv(ReferenceValue(arg))
         else:
             return Div(pulled_back_arg)
+
+    def curl(self, o, pulled_back_arg):
+        arg, = o.ufl_operands
+        if (isinstance(arg, FormArgument)
+            and arg.ufl_element().mapping() == "covariant Piola"):
+            domain = arg.ufl_domain()
+            detJ = JacobianDeterminant(domain)
+            J = Jacobian(domain)
+            return ScalarTensorProduct(
+                1.0/detJ,
+                Dot(J, ReferenceCurl(ReferenceValue(arg))))
+        else:
+            return Curl(pulled_back_arg)
 
     @memoized_handler
     def form_argument(self, o):

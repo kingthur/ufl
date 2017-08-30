@@ -4,15 +4,17 @@
 
 from ufl import *
 from ufl.algebra import Product, Sum, Division
-from ufl.algorithms.apply_algebra_lowering import apply_algebra_lowering
+from ufl.algorithms.apply_algebra_lowering import apply_algebra_lowering, apply_minimal_algebra_lowering
 from ufl.algorithms.apply_derivatives import apply_derivatives
+from ufl.algorithms.apply_function_pullbacks import apply_function_pullbacks
 from ufl.algorithms.compute_form_data import compute_form_data
 from ufl.algorithms.expand_indices import expand_indices
+from ufl.algorithms.apply_jacobian_cancellation import apply_jacobian_cancellation
 from ufl.constantvalue import FloatValue, Zero
 from ufl.core.multiindex import MultiIndex, FixedIndex
 from ufl.core.operator import Operator
 from ufl.corealg.traversal import post_traversal
-from ufl.differentiation import ReferenceGrad, ReferenceDiv
+from ufl.differentiation import ReferenceGrad, ReferenceDiv, ReferenceCurl
 from ufl.indexed import Indexed
 from ufl.indexsum import IndexSum
 from ufl.referencevalue import ReferenceValue
@@ -155,6 +157,10 @@ def context():
         def rt(self):
             cell = tetrahedron
             element = FiniteElement("RT", cell, degree=1)
+            return self.return_values(element)
+        def n1curl(self):
+            cell = tetrahedron
+            element = FiniteElement("N1curl", cell, degree=1)
             return self.return_values(element)
     return Context()
 
@@ -435,6 +441,19 @@ class TestCancellations:
             do_apply_function_pullbacks=True)
         return form_data.preprocessed_form._integrals[0].integrand()
 
+    def transform(self, expr):
+        # GTODO: Check that this matches compute_form_data.
+        # GTODO: Merge this with the functions above and below.
+        expr = apply_minimal_algebra_lowering(expr)
+        expr = apply_derivatives(expr)
+        expr = apply_function_pullbacks(expr)
+        expr = apply_derivatives(expr)
+        expr = apply_jacobian_cancellation(expr)
+        expr = apply_algebra_lowering(expr)
+        expr = apply_derivatives(expr)
+        return expr
+
+
     def test_div_div_nonconforming(self, context):
         f, g, w, element = context.vector(dim=3, cell=tetrahedron)
         base_expression = div(f)
@@ -464,6 +483,18 @@ class TestCancellations:
                                              MultiIndex((Index(13),))))
         assert equal_up_to_index_relabelling(actual, expected)
         assert equal_up_to_index_relabelling(actual, explicit_expected)
+
+    def test_curl_covariant_Piola(self, context):
+        f, g, w, element = context.n1curl()
+        base_expression = curl(f)
+        actual = self.transform(base_expression)
+        domain = f.ufl_domain()
+        J = Jacobian(domain)
+        detJ = JacobianDeterminant(domain)
+        expected = apply_derivatives(
+            apply_algebra_lowering(
+                1.0/detJ * dot(J, ReferenceCurl(ReferenceValue(f)))))
+        assert equal_up_to_index_relabelling(actual, expected)
 
 
 def transform(expr):
