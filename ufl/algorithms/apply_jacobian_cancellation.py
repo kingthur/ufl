@@ -37,7 +37,7 @@ from ufl.tensors import ComponentTensor, ListTensor
 
 
 class JacobianCancellation(MultiFunction):
-    """Each handler returns a 4-tuple: the handled node with:
+    """Each handler returns a 5-tuple: the handled node with:
     - the node as it is, with any Jacobian cancellation having occurred.
     - a Jacobian cancelled on the left,
     - a Jacobian cancelled on the right,
