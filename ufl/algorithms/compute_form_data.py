@@ -281,6 +281,7 @@ def compute_form_data(form,
     # Scale integrals to reference cell frames
     if do_apply_integral_scaling:
         form = apply_integral_scaling(form)
+        form = apply_det_j_cancellation(form)
 
     # Lower abstractions for tensor-algebra types into index notation,
     # reducing the number of operators later algorithms and form

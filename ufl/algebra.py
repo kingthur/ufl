@@ -403,10 +403,28 @@ class Power(Operator):
 class Abs(Operator):
     __slots__ = ()
 
+    def __new__(cls, a):
+        # Conversion
+        a = as_ufl(a)
+
+        # Type checking
+        if not is_true_ufl_scalar(a):
+            error("Cannot take the absolute value of a non-scalar expression %s." % ufl_err_str(a))
+
+        # Simplification
+        if isinstance(a, ScalarValue):
+            return type(a)(abs(a._value))
+
+        # Construction
+        self = Operator.__new__(cls)
+        self._init(a)
+        return self
+
+    def _init(self, a):
+        self.ufl_operands = (a,)
+
     def __init__(self, a):
-        Operator.__init__(self, (a,))
-        if not isinstance(a, Expr):
-            error("Expecting Expr instance, not %s." % ufl_err_str(a))
+        Operator.__init__(self)
 
     def evaluate(self, x, mapping, component, index_values):
         a = self.ufl_operands[0].evaluate(x, mapping, component, index_values)
