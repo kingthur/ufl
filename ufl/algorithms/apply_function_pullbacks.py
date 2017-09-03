@@ -32,7 +32,7 @@ from ufl.algorithms.map_integrands import map_integrand_dags
 from ufl.algebra import ScalarTensorProduct
 from ufl.core.multiindex import Index
 from ufl.core.terminal import FormArgument
-from ufl.differentiation import Div, ReferenceDiv, Curl, ReferenceCurl
+from ufl.differentiation import Div, Curl, ReferenceGrad
 from ufl.geometry import Jacobian, JacobianInverse, JacobianDeterminant
 from ufl.referencevalue import ReferenceValue
 from ufl.tensoralgebra import Dot
@@ -237,6 +237,24 @@ def apply_single_function_pullbacks(g):
     return f
 
 
+def ref_div_ito_ref_grad(ref_v):
+    i = Index()
+    return ReferenceGrad(ref_v)[..., i, i]
+
+
+def ref_curl_ito_ref_grad(ref_v):
+    def c(i, j):
+        return ReferenceGrad(ref_v[j])[i] - ReferenceGrad(ref_v[i])[j]
+    sh = ref_v.ufl_shape
+    if sh == ():
+        return as_vector((ReferenceGrad(ref_v)[1], -ReferenceGrad(ref_v)[0]))
+    elif sh == (2,):
+        return c(0, 1)
+    elif sh == (3,):
+        return as_vector((c(1, 2), c(2, 0), c(0, 1)))
+    error("Invalid shape %s of reference-curl argument." % (sh,))
+
+
 class FunctionPullbackApplier(MultiFunction):
     def __init__(self):
         MultiFunction.__init__(self)
@@ -251,7 +269,8 @@ class FunctionPullbackApplier(MultiFunction):
         if (isinstance(arg, FormArgument)
             and arg.ufl_element().mapping() == "contravariant Piola"):
             detJ = JacobianDeterminant(arg.ufl_domain())
-            return (1.0 / detJ) * ReferenceDiv(ReferenceValue(arg))
+            ref_div = ref_div_ito_ref_grad(ReferenceValue(arg))
+            return (1.0 / detJ) * ref_div
         else:
             return Div(pulled_back_arg)
 
@@ -262,9 +281,9 @@ class FunctionPullbackApplier(MultiFunction):
             domain = arg.ufl_domain()
             detJ = JacobianDeterminant(domain)
             J = Jacobian(domain)
+            ref_curl = ref_curl_ito_ref_grad(ReferenceValue(arg))
             return ScalarTensorProduct(
-                1.0/detJ,
-                Dot(J, ReferenceCurl(ReferenceValue(arg))))
+                1.0/detJ, Dot(J, ref_curl))
         else:
             return Curl(pulled_back_arg)
 

@@ -6,7 +6,7 @@ from ufl import *
 from ufl.algebra import Product, Sum, Division
 from ufl.algorithms.apply_algebra_lowering import apply_algebra_lowering, apply_minimal_algebra_lowering
 from ufl.algorithms.apply_derivatives import apply_derivatives
-from ufl.algorithms.apply_function_pullbacks import apply_function_pullbacks
+from ufl.algorithms.apply_function_pullbacks import apply_function_pullbacks, ref_div_ito_ref_grad, ref_curl_ito_ref_grad
 from ufl.algorithms.compute_form_data import compute_form_data
 from ufl.algorithms.expand_indices import expand_indices
 from ufl.algorithms.apply_jacobian_cancellation import apply_jacobian_cancellation
@@ -14,7 +14,7 @@ from ufl.constantvalue import FloatValue, Zero
 from ufl.core.multiindex import MultiIndex, FixedIndex
 from ufl.core.operator import Operator
 from ufl.corealg.traversal import post_traversal
-from ufl.differentiation import ReferenceGrad, ReferenceDiv, ReferenceCurl
+from ufl.differentiation import ReferenceGrad
 from ufl.indexed import Indexed
 from ufl.indexsum import IndexSum
 from ufl.referencevalue import ReferenceValue
@@ -477,7 +477,7 @@ class TestCancellations:
         base_expression = div(f)
         actual = self.compute_form_data_with_pullbacks(base_expression)
         mesh = f.ufl_domain()
-        expected = apply_algebra_lowering((1.0)/JacobianDeterminant(mesh) * ReferenceDiv(ReferenceValue(f)))
+        expected = apply_algebra_lowering((1.0)/JacobianDeterminant(mesh) * ref_div_ito_ref_grad(ReferenceValue(f)))
         explicit_expected = Product(Division(FloatValue(1.0), JacobianDeterminant(mesh)),
                                     IndexSum(Indexed(ReferenceGrad(ReferenceValue(f)), MultiIndex((Index(13), Index(13)))),
                                              MultiIndex((Index(13),))))
@@ -493,7 +493,7 @@ class TestCancellations:
         detJ = JacobianDeterminant(domain)
         expected = apply_derivatives(
             apply_algebra_lowering(
-                1.0/detJ * dot(J, ReferenceCurl(ReferenceValue(f)))))
+                1.0/detJ * dot(J, ref_curl_ito_ref_grad(ReferenceValue(f)))))
         assert equal_up_to_index_relabelling(actual, expected)
 
 

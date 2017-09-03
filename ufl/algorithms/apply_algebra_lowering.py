@@ -209,25 +209,6 @@ class LowerAllCompoundAlgebra(LowerIntractableCompoundAlgebra):
             return as_vector((c(1, 2), c(2, 0), c(0, 1)))
         error("Invalid shape %s of curl argument." % (sh,))
 
-    # ------------ Reference-space differential operators
-
-    def reference_div(self, o, arg):
-        i = Index()
-        ref_grad = ReferenceGrad(arg)
-        return ref_grad[..., i, i] # Implicit summation
-
-    def reference_curl(self, o, a):
-        def c(i, j):
-            return ReferenceGrad(a[j])[i] - ReferenceGrad(a[i])[j]
-        sh = a.ufl_shape
-        if sh == ():
-            return as_vector((ReferenceGrad(a)[1], -ReferenceGrad(a)[0]))
-        if sh == (2,):
-            return c(0, 1)
-        if sh == (3,):
-            return as_vector((c(1, 2), c(2, 0), c(0, 1)))
-        error("Invalid shape %s of reference-curl argument." % (sh,))
-
 
 def apply_algebra_lowering(expr):
     """Expands high level compound operators (e.g. inner) to equivalent
