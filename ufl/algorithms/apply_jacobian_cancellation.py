@@ -73,17 +73,6 @@ class JacobianCancellation(MultiFunction):
             error("Expecting only grads applied to a terminal.")
         return (o, None, None, None, None)
 
-    def reference_div(self, o):
-        if not isinstance(o.ufl_operands[0],
-                          (ReferenceGrad, ReferenceValue)):
-            error("Expecting ReferenceDiv applied to ReferenceGrad or ReferenceValue.")
-        return (o, None, None, None, None)
-
-    def reference_curl(self, o):
-        if not isinstance(o.ufl_operands[0], ReferenceValue):
-            error("Expecting ReferenceCurl applied to ReferenceValue.")
-        return (o, None, None, None, None)
-
     def scalar_tensor_product(self, o, scalar_tuple, tensor_tuple):
         scalar, _, _, _, _ = scalar_tuple
         tensor, sansJLeft, sansJRight, sansKLeft, sansKRight = tensor_tuple
