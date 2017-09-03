@@ -714,19 +714,14 @@ class DivRuleset(GenericDerivativeRuleset):
         f, = o.ufl_operands
         if not f._ufl_is_terminal_:
             error("ReferenceValue can only wrap a terminal")
-        if f.ufl_element().mapping() == "contravariant Piola":
-            # GTODO: Have we covered tensor cases?
-            detJ = JacobianDeterminant(f.ufl_domain())
-            return (1.0 / detJ) * ReferenceDiv(o)
+        # GTODO: Check this
+        K = JacobianInverse(f.ufl_domain())
+        j, = indices(1)
+        if len(o.ufl_shape) == 1:
+            return Dot(ReferenceGrad(o), K)[j, j]
         else:
-            # GTODO: Check this
-            K = JacobianInverse(f.ufl_domain())
-            j, = indices(1)
-            if len(o.ufl_shape) == 1:
-                return Dot(ReferenceGrad(o), K)[j, j]
-            else:
-                ii = indices(len(o.ufl_shape) - 1)
-                return as_tensor(IndexSum(Dot(ReferenceGrad(o), K)[ii + (j, j)]), ii)
+            ii = indices(len(o.ufl_shape) - 1)
+            return as_tensor(IndexSum(Dot(ReferenceGrad(o), K)[ii + (j, j)]), ii)
 
 
 class CurlRuleset(GenericDerivativeRuleset):
@@ -782,14 +777,8 @@ class CurlRuleset(GenericDerivativeRuleset):
         f, = o.ufl_operands
         if not f._ufl_is_terminal_:
             error("ReferenceValue can only wrap a terminal")
-        if f.ufl_element().mapping() == "covariant Piola":
-            # GTODO: Have we covered tensor cases?
-            J = Jacobian(f.ufl_domain())
-            detJ = JacobianDeterminant(f.ufl_domain())
-            return (1.0 / detJ) * Dot(J, ReferenceCurl(o))
-        else:
-            # GTODO: Check this
-            return apply_derivatives(apply_algebra_lowering(Curl(o)))
+        # GTODO: Check this
+        return apply_derivatives(apply_algebra_lowering(Curl(o)))
 
 
 class ReferenceGradRuleset(GenericDerivativeRuleset):
