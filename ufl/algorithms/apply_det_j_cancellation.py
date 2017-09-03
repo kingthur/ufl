@@ -21,7 +21,6 @@ inverse."""
 # along with UFL. If not, see <http://www.gnu.org/licenses/>.
 
 
-from functools import partial
 from ufl.algebra import Abs, Division, Product, ScalarTensorProduct, Sum
 from ufl.algorithms.map_integrands import map_integrands
 from ufl.conditional import Conditional, LT
@@ -78,62 +77,35 @@ class JacobianDeterminantCancellation(MultiFunction):
                     combo(num, num_sdj, denom, denom_s1odj),
                     combo(num, num_s1odj, denom, denom_sdj))
 
-    def general_product(self, o, left_tuple, right_tuple, constructor):
+    def general_product(self, o, left_tuple, right_tuple):
         # "sdj" means "sans detJ".
         (left, left_sdj, left_s1odj) = left_tuple
         (right, right_sdj, right_s1odj) = right_tuple
         if left_sdj and right_s1odj:
-            return (constructor(left_sdj, right_s1odj),
+            return (type(o)(left_sdj, right_s1odj),
                     None, None)
         elif left_s1odj and right_sdj:
-            return (constructor(left_s1odj, right_sdj),
+            return (type(o)(left_s1odj, right_sdj),
                     None, None)
         else:
             def combo(left, left_sans, right, right_sans):
                 if left_sans:
-                    return constructor(left_sans, right)
+                    return type(o)(left_sans, right)
                 elif right_sans:
-                    return constructor(left, right_sans)
+                    return type(o)(left, right_sans)
                 else:
                     return None
-            return (constructor(left, right),
+            return (type(o)(left, right),
                     combo(left, left_sdj, right, right_sdj),
                     combo(left, left_s1odj, right, right_s1odj))
 
-    def product(self, o, left_tuple, right_tuple):
-        return self.general_product(o, left_tuple, right_tuple, Product)
+    product = general_product
 
-    # def product(self, o, left_tuple, right_tuple):
-    #     # Use Product instead of * to avoid unnecessary shape checks.
-    #     # "sdj" means "sans detJ".
-    #     (left, left_sdj, left_s1odj) = left_tuple
-    #     (right, right_sdj, right_s1odj) = right_tuple
-    #     if left_sdj and right_s1odj:
-    #         return (Product(left_sdj, right_s1odj),
-    #                 None, None)
-    #     elif left_s1odj and right_sdj:
-    #         return (Product(left_s1odj, right_sdj),
-    #                 None, None)
-    #     else:
-    #         def combo(left, left_sans, right, right_sans):
-    #             if left_sans:
-    #                 return Product(left_sans, right)
-    #             elif right_sans:
-    #                 return Product(left, right_sans)
-    #             else:
-    #                 return None
-    #         return (Product(left, right),
-    #                 combo(left, left_sdj, right, right_sdj),
-    #                 combo(left, left_s1odj, right, right_s1odj))
+    scalar_tensor_product = general_product
 
-    def scalar_tensor_product(self, o, left_tuple, right_tuple):
-        return self.general_product(o, left_tuple, right_tuple, ScalarTensorProduct)
+    dot = general_product
 
-    def dot(self, o, left_tuple, right_tuple):
-        return self.general_product(o, left_tuple, right_tuple, Dot)
-
-    def inner(self, o, left_tuple, right_tuple):
-        return self.general_product(o, left_tuple, right_tuple, Inner)
+    inner = general_product
 
     def sum(self, o, left_tuple, right_tuple):
         (left, left_sdj, left_s1odj) = left_tuple
@@ -195,21 +167,18 @@ class JacobianDeterminantCancellation(MultiFunction):
                 ListTensor(*sdj_list) if all(sdj_list) else None,
                 ListTensor(*s1odj_list) if all(s1odj_list) else None)
 
-    def index_related(self, o, expression_tuple, multiindex_tuple, constructor):
+    def index_related(self, o, expression_tuple, multiindex_tuple):
         expr, expr_sdj, expr_s1odj = expression_tuple
         multiindex, _, _ = multiindex_tuple
-        return (constructor(expr, multiindex),
-                constructor(expr_sdj, multiindex) if expr_sdj else None,
-                constructor(expr_s1odj, multiindex) if expr_s1odj else None)
+        return (type(o)(expr, multiindex),
+                type(o)(expr_sdj, multiindex) if expr_sdj else None,
+                type(o)(expr_s1odj, multiindex) if expr_s1odj else None)
 
-    def component_tensor(self, o, expression_tuple, multiindex_tuple):
-        return self.index_related(o, expression_tuple, multiindex_tuple, ComponentTensor)
+    component_tensor = index_related
 
-    def indexed(self, o, expression_tuple, multiindex_tuple):
-        return self.index_related(o, expression_tuple, multiindex_tuple, Indexed)
+    indexed = index_related
 
-    def index_sum(self, o, expression_tuple, multiindex_tuple):
-        return self.index_related(o, expression_tuple, multiindex_tuple, IndexSum)
+    index_sum = index_related
 
     def restricted(self, o, operand_tuple):
         return (operand_tuple[0](o._side), None, None)
