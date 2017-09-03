@@ -83,27 +83,28 @@ class JacobianCancellation(MultiFunction):
                 ScalarTensorProduct(scalar, sansKRight) if sansKRight else None)
 
     def dot(self, o, left_tuple, right_tuple):
-        left, leftSansJLeft, leftSansJRight, leftSansKLeft, leftSansKRight = left_tuple
-        right, rightSansJLeft, rightSansJRight, rightSansKLeft, rightSansKRight = right_tuple
+        # _sjl means "sans Jacobian on the left", etc.
+        left, left_sjl, left_sjr, left_skl, left_skr = left_tuple
+        right, right_sjl, right_sjr, right_skl, right_skr = right_tuple
         transpose_allowed = o.ufl_shape == ()
-        if leftSansJRight and rightSansKLeft:
-            return (Dot(leftSansJRight, rightSansKLeft),
+        if left_sjr and right_skl:
+            return (Dot(left_sjr, right_skl),
                     None, None, None, None)
-        elif leftSansKRight and rightSansJLeft:
-            return (Dot(leftSansKRight, rightSansJLeft),
+        elif left_skr and right_sjl:
+            return (Dot(left_skr, right_sjl),
                     None, None, None, None)
-        elif transpose_allowed and leftSansJLeft and rightSansKRight:
-            return (Dot(leftSansJLeft, rightSansKRight),
+        elif transpose_allowed and left_sjl and right_skr:
+            return (Dot(left_sjl, right_skr),
                     None, None, None, None)
-        elif transpose_allowed and leftSansKLeft and rightSansJRight:
-            return (Dot(leftSansKLeft, rightSansJRight),
+        elif transpose_allowed and left_skl and right_sjr:
+            return (Dot(left_skl, right_sjr),
                     None, None, None, None)
         else:
             return (Dot(left, right),
-                    Dot(leftSansJLeft, right) if leftSansJLeft else None,
-                    Dot(left, rightSansJRight) if rightSansJRight else None,
-                    Dot(leftSansKLeft, right) if leftSansKLeft else None,
-                    Dot(left, rightSansKRight) if rightSansKRight else None)
+                    Dot(left_sjl, right) if left_sjl else None,
+                    Dot(left, right_sjr) if right_sjr else None,
+                    Dot(left_skl, right) if left_skl else None,
+                    Dot(left, right_skr) if right_skr else None)
 
     def division(self, o):
         # Only divison of scalars is allowed.
@@ -113,13 +114,13 @@ class JacobianCancellation(MultiFunction):
         return (o, None, None, None, None)
 
     def sum(self, o, left_tuple, right_tuple):
-        left, leftSansJLeft, leftSansJRight, leftSansKLeft, leftSansKRight = left_tuple
-        right, rightSansJLeft, rightSansJRight, rightSansKLeft, rightSansKRight = right_tuple
+        left, left_sjl, left_sjr, left_skl, left_skr = left_tuple
+        right, right_sjl, right_sjr, right_skl, right_skr = right_tuple
         return (left + right,
-                leftSansJLeft + rightSansJLeft if leftSansJLeft and rightSansJLeft else None,
-                leftSansJRight + rightSansJRight if leftSansJRight and rightSansJRight else None,
-                leftSansKLeft + rightSansKLeft if leftSansKLeft and rightSansKLeft else None,
-                leftSansKRight + rightSansKRight if leftSansKRight and rightSansKRight else None)
+                left_sjl + right_sjl if left_sjl and right_sjl else None,
+                left_sjr + right_sjr if left_sjr and right_sjr else None,
+                left_skl + right_skl if left_skl and right_skl else None,
+                left_skr + right_skr if left_skr and right_skr else None)
 
     def product(self, o):
         return (o, None, None, None, None)
