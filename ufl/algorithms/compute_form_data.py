@@ -40,6 +40,7 @@ from ufl.algorithms.apply_geometry_lowering import apply_geometry_lowering
 from ufl.algorithms.apply_restrictions import apply_restrictions, apply_default_restrictions
 from ufl.algorithms.estimate_degrees import estimate_total_polynomial_degree
 from ufl.algorithms.apply_jacobian_cancellation import apply_jacobian_cancellation
+from ufl.algorithms.apply_det_j_cancellation import apply_det_j_cancellation
 
 # See TODOs at the call sites of these below:
 from ufl.algorithms.domain_analysis import build_integral_data
@@ -283,6 +284,7 @@ def compute_form_data(form,
     # Scale integrals to reference cell frames
     if do_apply_integral_scaling:
         form = apply_integral_scaling(form)
+        form = apply_det_j_cancellation(form)
 
     # Lower abstractions for tensor-algebra types into index notation,
     # reducing the number of operators later algorithms and form
