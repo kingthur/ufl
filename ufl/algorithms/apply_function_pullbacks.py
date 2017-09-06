@@ -277,7 +277,8 @@ class FunctionPullbackApplier(MultiFunction):
     def curl(self, o, pulled_back_arg):
         arg, = o.ufl_operands
         if (isinstance(arg, FormArgument)
-            and arg.ufl_element().mapping() == "covariant Piola"):
+            and arg.ufl_element().mapping() == "covariant Piola"
+            and arg.ufl_shape == (3,)):
             domain = arg.ufl_domain()
             detJ = JacobianDeterminant(domain)
             J = Jacobian(domain)
