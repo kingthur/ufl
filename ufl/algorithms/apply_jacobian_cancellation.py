@@ -61,6 +61,10 @@ class JacobianCancellation(MultiFunction):
     def terminal(self, o):
         return (o, None, None, None, None)
 
+    def structure_lost(self, o, *op_tuples):
+        return (type(o)(*[op for (op, _, _, _, _) in op_tuples]),
+                None, None, None, None)
+
     def reference_value(self, o):
         f, = o.ufl_operands
         if not f._ufl_is_terminal_:
@@ -125,35 +129,17 @@ class JacobianCancellation(MultiFunction):
     def product(self, o):
         return (o, None, None, None, None)
 
-    def power(self, o, base_tuple, exponent_tuple):
-        return (base_tuple[0]**exponent_tuple[0],
-                None, None, None, None)
+    power = structure_lost
 
-    def list_tensor(self, o, *op_tuples):
-        return (ListTensor(*[op for (op, _, _, _, _) in op_tuples]),
-                None, None, None, None)
+    list_tensor = structure_lost
 
-    def component_tensor(self, o, expression_tuple, multiindex_tuple):
-        expression, _, _, _, _ = expression_tuple
-        multiindex, _, _, _, _ = multiindex_tuple
-        return (ComponentTensor(expression, multiindex),
-                None, None, None, None)
+    component_tensor = structure_lost
 
-    def indexed(self, o, expression_tuple, multiindex_tuple):
-        expression, _, _, _, _ = expression_tuple
-        multiindex, _, _, _, _ = multiindex_tuple
-        return (Indexed(expression, multiindex),
-                None, None, None, None)
+    indexed = structure_lost
 
-    def index_sum(self, o, expression_tuple, multiindex_tuple):
-        expression, _, _, _, _ = expression_tuple
-        multiindex, _, _, _, _ = multiindex_tuple
-        return (IndexSum(expression, multiindex),
-                None, None, None, None)
+    index_sum = structure_lost
 
-    def restricted(self, o, operand_tuple):
-        return (operand_tuple[0](o._side),
-                None, None, None, None)
+    restricted = structure_lost
 
 
 def apply_jacobian_cancellation_in_expression(expression):
