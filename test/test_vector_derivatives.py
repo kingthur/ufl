@@ -10,15 +10,17 @@ from ufl.algorithms.apply_function_pullbacks import apply_function_pullbacks, re
 from ufl.algorithms.compute_form_data import compute_form_data
 from ufl.algorithms.expand_indices import expand_indices
 from ufl.algorithms.apply_jacobian_cancellation import apply_jacobian_cancellation
-from ufl.constantvalue import FloatValue, Zero
+from ufl.conditional import Conditional, LT
+from ufl.constantvalue import FloatValue, IntValue, Zero
 from ufl.core.multiindex import MultiIndex, FixedIndex
 from ufl.core.operator import Operator
 from ufl.corealg.traversal import post_traversal
 from ufl.differentiation import ReferenceGrad
+from ufl.geometry import QuadratureWeight
 from ufl.indexed import Indexed
 from ufl.indexsum import IndexSum
 from ufl.referencevalue import ReferenceValue
-from ufl.tensors import ComponentTensor
+from ufl.tensors import ComponentTensor, ListTensor
 from itertools import izip_longest
 import pytest
 
@@ -656,4 +658,143 @@ class TestPullbacks():
         expected = apply_algebra_lowering(
             dot((1.0/detJ) * ref_q,
                 ReferenceGrad(ref_v)))
+        assert equal_up_to_index_relabelling(actual, expected)
+
+    def test_evaluation_form_1(self):
+        cell = triangle
+        rt_element = FiniteElement("RT", cell, degree=1)
+        cg_element = FiniteElement("CG", cell, degree=1)
+        q = Coefficient(rt_element)
+        f = Coefficient(cg_element)
+        v = Argument(cg_element, 0)
+        a = dot(q, grad(f)) * dx
+        a_prime = derivative(a, f, v)
+        a_prime_data = compute_form_data(
+            a_prime, do_apply_function_pullbacks=True,
+            do_apply_integral_scaling=True)
+        a_prime = a_prime_data.preprocessed_form
+        actual = a_prime.integrals()[0]._integrand
+        domain = q.ufl_domain()
+        expected = Product(
+            Product(
+                QuadratureWeight(domain),
+                Conditional(
+                    LT(
+                        JacobianDeterminant(domain),
+                        Zero((), (), ())),
+                    FloatValue(-1.0),
+                    FloatValue(1.0))),
+            IndexSum(
+                Product(
+                    Indexed(
+                        ReferenceGrad(
+                            ReferenceValue(v)),
+                        MultiIndex((Index(10),))),
+                    Indexed(
+                        ReferenceValue(q),
+                        MultiIndex((Index(10),)))),
+                MultiIndex((Index(10),))))
+        assert equal_up_to_index_relabelling(actual, expected)
+
+    def test_evaluation_form_2(self):
+        cell = triangle
+        cg_element = FiniteElement("CG", cell, degree=1)
+        u = Coefficient(cg_element)
+        rt_element = FiniteElement("RT", cell, degree=1)
+        f = Coefficient(rt_element)
+        v = Argument(rt_element, 0)
+        a = u * div(f) * dx
+        a_prime = derivative(a, f, v)
+        a_prime_data = compute_form_data(
+            a_prime, do_apply_function_pullbacks=True,
+            do_apply_integral_scaling=True)
+        a_prime = a_prime_data.preprocessed_form
+        actual = a_prime.integrals()[0]._integrand
+        domain = u.ufl_domain()
+        expected = Product(
+            Product(
+                QuadratureWeight(domain),
+                Conditional(
+                    LT(
+                        JacobianDeterminant(domain),
+                        Zero((), (), ())),
+                    FloatValue(-1.0),
+                    FloatValue(1.0))),
+            Product(
+                IndexSum(
+                    Indexed(
+                        ReferenceGrad(
+                            ReferenceValue(v)),
+                        MultiIndex((Index(10), Index(10)))),
+                    MultiIndex((Index(10),))),
+                ReferenceValue(u)))
+        assert equal_up_to_index_relabelling(actual, expected)
+
+    def test_evaluation_form_3(self):
+        cell = tetrahedron
+        n_element = FiniteElement("N1curl", cell, degree=1)
+        u = Coefficient(n_element)
+        v = Coefficient(n_element)
+        rt_element = FiniteElement("RT", cell, degree=1)
+        q = Coefficient(rt_element)
+        a = dot(u, q + curl(v)) * dx
+        a_data = compute_form_data(
+            a, do_apply_function_pullbacks=True,
+            do_apply_integral_scaling=True)
+        a = a_data.preprocessed_form
+        actual = a.integrals()[0]._integrand
+        domain = u.ufl_domain()
+        expected = Product(
+            Product(
+                QuadratureWeight(domain),
+                Conditional(
+                    LT(
+                        JacobianDeterminant(domain),
+                        Zero((), (), ())),
+                    FloatValue(-1.0),
+                    FloatValue(1.0))),
+            IndexSum(
+                Product(
+                    Indexed(
+                        Sum(
+                            ListTensor(
+                                Sum(
+                                    Indexed(
+                                        ReferenceGrad(
+                                        ReferenceValue(v)),
+                                        MultiIndex((FixedIndex(2), FixedIndex(1)))),
+                                    Product(
+                                        IntValue(-1),
+                                        Indexed(
+                                            ReferenceGrad(
+                                                ReferenceValue(v)),
+                                            MultiIndex((FixedIndex(1), FixedIndex(2)))))),
+                                Sum(
+                                    Indexed(
+                                        ReferenceGrad(
+                                            ReferenceValue(v)),
+                                        MultiIndex((FixedIndex(0), FixedIndex(2)))),
+                                    Product(
+                                        IntValue(-1),
+                                        Indexed(
+                                            ReferenceGrad(
+                                                ReferenceValue(v)),
+                                            MultiIndex((FixedIndex(2), FixedIndex(0)))))),
+                                Sum(
+                                    Indexed(
+                                        ReferenceGrad(
+                                            ReferenceValue(v)),
+                                        MultiIndex((FixedIndex(1), FixedIndex(0)))),
+                                    Product(
+                                        IntValue(-1),
+                                        Indexed(
+                                            ReferenceGrad(
+                                                ReferenceValue(v)),
+                                            MultiIndex((FixedIndex(0), FixedIndex(1))))))),
+                            ReferenceValue(q)),
+                        MultiIndex((Index(17),))),
+                    Indexed(
+                        ReferenceValue(u),
+                        MultiIndex((Index(17),)))),
+                MultiIndex((Index(17),))))
         assert equal_up_to_index_relabelling(actual, expected)
