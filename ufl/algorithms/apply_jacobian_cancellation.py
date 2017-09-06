@@ -110,12 +110,9 @@ class JacobianCancellation(MultiFunction):
                     Dot(left_skl, right) if left_skl else None,
                     Dot(left, right_skr) if right_skr else None)
 
-    def division(self, o):
-        # Only divison of scalars is allowed.
-        return (o, None, None, None, None)
+    division = structure_lost
 
-    def inner(self, o):
-        return (o, None, None, None, None)
+    inner = structure_lost
 
     def sum(self, o, left_tuple, right_tuple):
         left, left_sjl, left_sjr, left_skl, left_skr = left_tuple
@@ -126,8 +123,7 @@ class JacobianCancellation(MultiFunction):
                 left_skl + right_skl if left_skl and right_skl else None,
                 left_skr + right_skr if left_skr and right_skr else None)
 
-    def product(self, o):
-        return (o, None, None, None, None)
+    product = structure_lost
 
     power = structure_lost
 
