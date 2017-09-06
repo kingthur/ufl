@@ -139,6 +139,8 @@ class JacobianCancellation(MultiFunction):
 
     power = structure_lost
 
+    math_function = structure_lost
+
     list_tensor = structure_lost
 
     component_tensor = structure_lost
@@ -148,6 +150,23 @@ class JacobianCancellation(MultiFunction):
     index_sum = structure_lost
 
     restricted = structure_lost
+
+    binary_condition = structure_lost
+
+    div = structure_lost
+
+    curl = structure_lost
+
+    def conditional(self, o, _, true_tuple, false_tuple):
+        true_dflt, true_sjl, true_sjr, true_skl, true_skr = true_tuple
+        false_dflt, false_sjl, false_sjr, false_skl, false_skr = false_tuple
+        return (true_dflt + false_dflt,
+                true_sjl + false_sjl if true_sjl and false_sjl else None,
+                true_sjr + false_sjr if true_sjr and false_sjr else None,
+                true_skl + false_skl if true_skl and false_skl else None,
+                true_skr + false_skr if true_skr and false_skr else None)
+
+    abs = structure_lost
 
 
 def apply_jacobian_cancellation_in_expression(expression):
