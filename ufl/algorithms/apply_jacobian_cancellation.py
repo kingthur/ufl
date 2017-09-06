@@ -51,12 +51,18 @@ class JacobianCancellation(MultiFunction):
         error("Missing Jacobian cancellation handler for type {0}.".format(o._ufl_class_.__name__))
 
     def jacobian(self, o):
-        dim, _ = o.ufl_shape
-        return (o, Identity(dim), Identity(dim), None, None)
+        dim1, dim2 = o.ufl_shape
+        if dim1 == dim2:
+            return (o, Identity(dim1), Identity(dim1), None, None)
+        else:
+            return (o, None, None, None, None)
 
     def jacobian_inverse(self, o):
-        dim, _ = o.ufl_shape
-        return (o, None, None, Identity(dim), Identity(dim))
+        dim1, dim2 = o.ufl_shape
+        if dim1 == dim2:
+            return (o, None, None, Identity(dim1), Identity(dim1))
+        else:
+            return (o, None, None, None, None)
 
     def terminal(self, o):
         return (o, None, None, None, None)
