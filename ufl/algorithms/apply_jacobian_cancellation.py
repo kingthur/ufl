@@ -120,14 +120,20 @@ class JacobianCancellation(MultiFunction):
 
     inner = structure_lost
 
-    def sum(self, o, left_tuple, right_tuple):
+    def combine(self, o, left_tuple, right_tuple):
         left, left_sjl, left_sjr, left_skl, left_skr = left_tuple
         right, right_sjl, right_sjr, right_skl, right_skr = right_tuple
-        return (left + right,
-                left_sjl + right_sjl if left_sjl and right_sjl else None,
-                left_sjr + right_sjr if left_sjr and right_sjr else None,
-                left_skl + right_skl if left_skl and right_skl else None,
-                left_skr + right_skr if left_skr and right_skr else None)
+        return (type(o)(left, right),
+                type(o)(left_sjl, right_sjl) if left_sjl and right_sjl else None,
+                type(o)(left_sjr, right_sjr) if left_sjr and right_sjr else None,
+                type(o)(left_skl, right_skl) if left_skl and right_skl else None,
+                type(o)(left_skr, right_skr) if left_skr and right_skr else None)
+
+    sum = combine
+
+    min_value = combine
+
+    max_value = combine
 
     product = structure_lost
 
