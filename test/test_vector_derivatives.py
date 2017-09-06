@@ -258,7 +258,7 @@ class TestDiv:
         f, g, w, element = context.scalar()
         base_expression = as_tensor([f, g])
         actual = apply_derivatives(div(base_expression))
-        expected = div(base_expression)
+        expected = as_tensor([grad(f), grad(g)])[i, i]
         assert equal_up_to_index_relabelling(actual, expected)
 
     def test_list_tensor_of_vectors(self, context):
@@ -277,7 +277,7 @@ class TestDiv:
         # Check that no simplification has occurred.
         assert type(base_expression) == ComponentTensor
         actual = apply_derivatives(div(base_expression))
-        expected = div(base_expression)
+        expected = grad(f)[i, i]
         assert equal_up_to_index_relabelling(actual, expected)
 
     def test_tensor_component_tensor(self, context):
@@ -291,7 +291,8 @@ class TestDiv:
         # Check that no simplification has occurred.
         assert type(base_expression) == ComponentTensor
         actual = apply_derivatives(div(base_expression))
-        expected = div(base_expression)
+        # Expected is difficult to express otherwise. GTODO
+        expected = apply_derivatives(apply_algebra_lowering(div(base_expression)))
         assert equal_up_to_index_relabelling(actual, expected)
 
     def test_indexed(self, context):
@@ -308,7 +309,8 @@ class TestCurl:
         h = Coefficient(element)
         base_expression = as_tensor([f, g, h])
         actual = apply_derivatives(curl(base_expression))
-        expected = curl(base_expression)
+        expected = apply_derivatives(
+            apply_algebra_lowering(curl(base_expression)))
         assert equal_up_to_index_relabelling(actual, expected)
 
     def test_component_tensor(self, context):
@@ -318,7 +320,8 @@ class TestCurl:
         # Check that no simplification has occurred.
         assert type(base_expression) == ComponentTensor
         actual = apply_derivatives(curl(base_expression))
-        expected = curl(base_expression)
+        expected = apply_derivatives(
+            apply_algebra_lowering(curl(base_expression)))
         assert equal_up_to_index_relabelling(actual, expected)
 
     def test_indexed(self, context):

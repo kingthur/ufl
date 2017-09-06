@@ -48,7 +48,7 @@ from math import pi
 from ufl.corealg.multifunction import MultiFunction
 from ufl.corealg.map_dag import map_expr_dag
 from ufl.algorithms.map_integrands import map_integrand_dags
-from ufl.algorithms.apply_algebra_lowering import apply_algebra_lowering # GTODO for curl reduction.
+from ufl.algorithms.apply_algebra_lowering import LowerAllCompoundAlgebra
 
 from ufl.checks import is_cellwise_constant
 
@@ -604,6 +604,9 @@ class DivRuleset(GenericDerivativeRuleset):
         # independent_operator below.
         GenericDerivativeRuleset.__init__(self, var_shape=())
 
+    def div_ito_grad(self, o):
+        return LowerAllCompoundAlgebra().div(o, o)
+
     def scalar_tensor_product(self, o):
         a, b = o.ufl_operands
         return apply_derivatives(
@@ -654,7 +657,7 @@ class DivRuleset(GenericDerivativeRuleset):
         # arguments) and directly implement the tensor case in order
         # to avoid trying to take the Div of a scalar.
         if len(o.ufl_shape) <= 1:
-            return apply_derivatives(apply_algebra_lowering(Div(o)))
+            return apply_derivatives(self.div_ito_grad(o))
         else:
             div_components = (apply_derivatives(Div(comp)) for comp in o.ufl_operands)
             return ListTensor(*div_components)
@@ -667,7 +670,7 @@ class DivRuleset(GenericDerivativeRuleset):
         # to be taken through the ComponentTensor, but free indices in
         # the argument to Div are not allowed, so this cannot be
         # implemented (at least without using a ListTensor instead).
-        return apply_derivatives(apply_algebra_lowering(Div(o)))
+        return apply_derivatives(self.div_ito_grad(o))
 
     def indexed(self, o):
         # Taking the div of an indexed quantity makes sense, as such
@@ -675,7 +678,7 @@ class DivRuleset(GenericDerivativeRuleset):
         # of a scalar) and may not even be wrapped by component
         # tensors if the indices are fixed. But we cannot interchange
         # the indexing and the divergence operator.
-        return apply_derivatives(apply_algebra_lowering(Div(o)))
+        return apply_derivatives(self.div_ito_grad(o))
 
     def dot(self, o):
         f, g = o.ufl_operands
@@ -727,6 +730,9 @@ class CurlRuleset(GenericDerivativeRuleset):
     def __init__(self):
         GenericDerivativeRuleset.__init__(self, var_shape=())
 
+    def curl_ito_grad(self, o):
+        return LowerAllCompoundAlgebra().curl(o, o)
+
     # --- Specialized rules for geometric quantities
 
     def geometric_quantity(self, o):
@@ -753,13 +759,13 @@ class CurlRuleset(GenericDerivativeRuleset):
         # The argument to curl is guaranteed to be a scalar, a 2D
         # vector or a 3D vector, so the curl operator cannot pass
         # through the ListTensor.
-        return apply_derivatives(apply_algebra_lowering(Curl(o)))
+        return apply_derivatives(self.curl_ito_grad(o))
 
     def component_tensor(self, o):
         # The argument to curl is guaranteed to be a scalar, a 2D
         # vector or a 3D vector, so the curl operator cannot pass
         # through the ComponentTensor.
-        return apply_derivatives(apply_algebra_lowering(Curl(o)))
+        return apply_derivatives(self.curl_ito_grad(o))
 
     def indexed(self, o):
         # Taking the curl of an indexed quantity makes sense, as such
@@ -767,7 +773,7 @@ class CurlRuleset(GenericDerivativeRuleset):
         # of a scalar) and may not even be wrapped by component
         # tensors if the indices are fixed. But we cannot interchange
         # the indexing and the curl operator.
-        return apply_derivatives(apply_algebra_lowering(Curl(o)))
+        return apply_derivatives(self.curl_ito_grad(o))
 
     cell_avg = GenericDerivativeRuleset.independent_operator
     facet_avg = GenericDerivativeRuleset.independent_operator
