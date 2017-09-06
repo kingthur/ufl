@@ -660,6 +660,11 @@ class TestPullbacks():
                 ReferenceGrad(ref_v)))
         assert equal_up_to_index_relabelling(actual, expected)
 
+    def sign_det_j(self, domain):
+        return Conditional(
+            LT(JacobianDeterminant(domain), Zero((), (), ())),
+            FloatValue(-1.0), FloatValue(1.0))
+
     def test_evaluation_form_1(self):
         cell = triangle
         rt_element = FiniteElement("RT", cell, degree=1)
@@ -678,22 +683,10 @@ class TestPullbacks():
         expected = Product(
             Product(
                 QuadratureWeight(domain),
-                Conditional(
-                    LT(
-                        JacobianDeterminant(domain),
-                        Zero((), (), ())),
-                    FloatValue(-1.0),
-                    FloatValue(1.0))),
-            IndexSum(
-                Product(
-                    Indexed(
-                        ReferenceGrad(
-                            ReferenceValue(v)),
-                        MultiIndex((Index(10),))),
-                    Indexed(
-                        ReferenceValue(q),
-                        MultiIndex((Index(10),)))),
-                MultiIndex((Index(10),))))
+                self.sign_det_j(domain)),
+            apply_algebra_lowering(
+                dot(ReferenceGrad(ReferenceValue(v)),
+                    ReferenceValue(q))))
         assert equal_up_to_index_relabelling(actual, expected)
 
     def test_evaluation_form_2(self):
@@ -714,19 +707,9 @@ class TestPullbacks():
         expected = Product(
             Product(
                 QuadratureWeight(domain),
-                Conditional(
-                    LT(
-                        JacobianDeterminant(domain),
-                        Zero((), (), ())),
-                    FloatValue(-1.0),
-                    FloatValue(1.0))),
+                self.sign_det_j(domain)),
             Product(
-                IndexSum(
-                    Indexed(
-                        ReferenceGrad(
-                            ReferenceValue(v)),
-                        MultiIndex((Index(10), Index(10)))),
-                    MultiIndex((Index(10),))),
+                ref_div_ito_ref_grad(ReferenceValue(v)),
                 ReferenceValue(u)))
         assert equal_up_to_index_relabelling(actual, expected)
 
@@ -747,12 +730,7 @@ class TestPullbacks():
         expected = Product(
             Product(
                 QuadratureWeight(domain),
-                Conditional(
-                    LT(
-                        JacobianDeterminant(domain),
-                        Zero((), (), ())),
-                    FloatValue(-1.0),
-                    FloatValue(1.0))),
+                self.sign_det_j(domain)),
             IndexSum(
                 Product(
                     Indexed(
