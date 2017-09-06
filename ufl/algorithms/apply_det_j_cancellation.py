@@ -169,8 +169,15 @@ class JacobianDeterminantCancellation(MultiFunction):
 
     index_sum = index_related
 
-    def restricted(self, o, operand_tuple):
-        return (operand_tuple[0](o._side), None, None)
+    def structure_lost(self, o, *op_tuples):
+        return (type(o)(*[op for (op, _, _) in op_tuples]),
+                None, None)
+
+    restricted = structure_lost
+
+    math_function = structure_lost
+
+    abs = structure_lost
 
 
 def apply_det_j_cancellation_in_expression(expression):
