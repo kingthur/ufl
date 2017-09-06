@@ -177,8 +177,6 @@ class JacobianDeterminantCancellation(MultiFunction):
 
     math_function = structure_lost
 
-    abs = structure_lost
-
 
 def apply_det_j_cancellation_in_expression(expression):
     """Here, the argument must be an expression."""
