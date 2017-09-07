@@ -716,14 +716,7 @@ class DivRuleset(GenericDerivativeRuleset):
         f, = o.ufl_operands
         if not f._ufl_is_terminal_:
             error("ReferenceValue can only wrap a terminal")
-        # GTODO: Check this
-        K = JacobianInverse(f.ufl_domain())
-        j, = indices(1)
-        if len(o.ufl_shape) == 1:
-            return Dot(ReferenceGrad(o), K)[j, j]
-        else:
-            ii = indices(len(o.ufl_shape) - 1)
-            return as_tensor(IndexSum(Dot(ReferenceGrad(o), K)[ii + (j, j)]), ii)
+        return apply_derivatives(self.div_ito_grad(o))
 
 
 class CurlRuleset(GenericDerivativeRuleset):
