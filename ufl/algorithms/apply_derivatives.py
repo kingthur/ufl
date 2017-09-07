@@ -775,8 +775,7 @@ class CurlRuleset(GenericDerivativeRuleset):
         f, = o.ufl_operands
         if not f._ufl_is_terminal_:
             error("ReferenceValue can only wrap a terminal")
-        # GTODO: Check this
-        return apply_derivatives(apply_algebra_lowering(Curl(o)))
+        return apply_derivatives(self.curl_ito_grad(o))
 
 
 class ReferenceGradRuleset(GenericDerivativeRuleset):
