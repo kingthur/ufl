@@ -14,7 +14,7 @@ from ufl.algorithms.apply_derivatives import apply_derivatives, GenericDerivativ
 from ufl.core.multiindex import MultiIndex
 from ufl.indexed import Indexed
 from ufl.indexsum import IndexSum
-from equal_up_to_index_relabelling import equal_up_to_index_relabelling
+from test_vector_derivatives import equal_up_to_index_relabelling
 
 
 # Note: the old tests in test_automatic_differentiation.py are a bit messy
